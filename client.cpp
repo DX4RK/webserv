@@ -14,7 +14,7 @@ int main(void) {
 
 	int socket = test_socket.get_sock();
 	long main_value;
-	const char *msg = "GET /index HTTP/1.1";
+	const char *msg = "GET index.html HTTP/1.1";
 
 	char buffer[1024] = {0};
 

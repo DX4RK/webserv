@@ -7,13 +7,11 @@
 #include <unistd.h>
 
 int main() {
-	int result;
-	//std::string path = "./web/test/king.lol";
-	std::string path = "/root";
-	DIR *t = opendir(path.c_str());
-	dirent *r = readdir(path.c_str());
+time_t timestamp = time(NULL);
+struct tm datetime = *gmtime(&timestamp);
 
-	std::cout << t << std::endl;
-	result = access(path.c_str(), F_OK);
-	std::cout << result << std::endl;
+char output[50];
+
+strftime(output, 50, "%a, %e %b %Y %H:%M:%S GMT", &datetime);
+std::cout << output << "\n";
 }
