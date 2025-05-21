@@ -1,13 +1,15 @@
 #pragma once
 
-#include "utils.hpp"
-#include "unistd.h"
-#include <stdio.h>
 #include <cstring>
 #include <cstdlib>
+#include <iostream>
+
+#include <stdio.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <iostream>
+
+#include "utils.hpp"
 
 class Socket
 {

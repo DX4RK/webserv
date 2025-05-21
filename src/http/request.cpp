@@ -1,78 +1,12 @@
-#include "../../includes/request.hpp"
-
-//std::vector<std::string> validMethods;
-//validMethods.push_back("GET"); validMethods.push_back("POST"); validMethods.push_back("PUT");
-
-//bool in_array(const std::string &value, const std::vector<std::string> &array)
-//{
-//	return std::find(array.begin(), array.end(), value) != array.end();
-//}
-
-/* UTILS */
-
-bool fileExists(const std::string &filePath) {
-	struct stat buffer;
-	return (stat(filePath.c_str(), &buffer) == 0);
-}
-
-bool isDirectory(const std::string &path) {
-	struct stat buffer;
-	if (stat(path.c_str(), &buffer) != 0) {
-		return false; // Path does not exist
-	}
-	return S_ISDIR(buffer.st_mode);
-}
-
-bool hasReadPermission(const std::string &filePath) {
-	return (access(filePath.c_str(), R_OK) == 0);
-}
-
-bool methodValid(std::string method) {
-	std::string methods[3] = { "GET", "POST", "PUT" };
-	for (size_t i = 0; i < methods->length(); i++) {
-		if (methods[i] == method) { return true; }
-	}
-	return false;
-}
-
-bool protocolValid(std::string protocol) {
-	if (protocol.substr(0, 4).compare("HTTP") != 0) { return false; }
-	if (protocol[4] != '/') { return false; }
-	if (protocol.substr(5, 3).compare("1.1") != 0) { return false; }
-
-	return (true);
-}
-
-std::vector<std::string> getLines(std::string buffer) {
-	std::string line;
-	std::vector<std::string> lines;
-
-	for (size_t i = 0; i <= buffer.length(); i++) {
-		if (buffer[i] == '\n') {
-			lines.push_back(line); line = "";
-			continue;
-		}
-		line = line + buffer[i];
-	}
-	if (line.length() > 0) { lines.push_back(line); line = ""; }
-
-	return (lines);
-}
-
-std::vector<std::string> splitString(std::string str) {
-	std::stringstream ss(str);
-	std::string word;
-	std::vector<std::string> words;
-
-	while (ss >> word) { words.push_back(word); }
-	return (words);
-}
+#include "request.hpp"
 
 /* MAIN */
 
 Request::Request(void) {}
 Request::Request(ListenSocket &listener) {
-	//std::vector<std::string>
+
+	// INIT //
+
 	this->_parsingResult.proceed = false;
 	this->_parsingResult.status_code = 0;
 	this->_parsingResult.status_message = "";
@@ -80,9 +14,7 @@ Request::Request(ListenSocket &listener) {
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
 
-	// REQUEST LINE
-
-	std::cout << lines.at(0) << std::endl;
+	// REQUEST LINE //
 
 	try {
 		std::vector<std::string> words = splitString(lines.at(0));
@@ -105,12 +37,12 @@ Request::Request(ListenSocket &listener) {
 		if (!this->_handleFileRequest(url)) { throw std::exception(); }
 
 	} catch ( std::exception &e ) {
-		std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
-		std::cout << this->_parsingResult.status_message << std::endl;
+		//std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
+		//std::cout << this->_parsingResult.status_message << std::endl;
 		return;
 	}
 
-	// HEADERS
+	// HEADERS //
 
 	try {
 		for (size_t i = 0; i < lines.size(); i++) {
@@ -123,24 +55,30 @@ Request::Request(ListenSocket &listener) {
 			}
 		}
 	} catch ( std::exception &e ) {
-		std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
-		std::cout << this->_parsingResult.status_message << std::endl;
+		//std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
+		//std::cout << this->_parsingResult.status_message << std::endl;
 		return;
 	}
 
-	// BODY
+	// BODY //
 
-	// END
+		/*! MAKE BODY GESTION FOR INTERACTIVE METHODS !*/
 
-	this->_parsingResult.proceed = true;
-	this->_parsingResult.status_code = 200;
-	this->_parsingResult.status_message = "OK";
+	// IF EVERYTHING NO PROCEED = EVERYTHING OK
 
-	Response t(*this);
+	if (!this->_parsingResult.proceed) {
+		this->_parsingResult.proceed = true;
+		this->_parsingResult.status_code = 200;
+		this->_parsingResult.status_message = "OK";
+	}
+
+	// REQUEST DATA IS READY TO MAKE RESPONSE
 }
 
 bool Request::_handleFileRequest(const std::string &filePath) {
 	std::string fullPath = WEB_ROOT + filePath;
+
+	this->_fileName = getLastSub(fullPath, '/');
 
 	if (!fileExists(fullPath)) {
 		this->_parsingResult.proceed = true;
@@ -152,6 +90,7 @@ bool Request::_handleFileRequest(const std::string &filePath) {
 	// Check if it’s a directory
 	if (isDirectory(fullPath)) {
 		fullPath += "/index.html"; // Try to resolve to index.html
+		this->_fileName = "index";
 		if (!fileExists(fullPath)) {
 			this->_parsingResult.proceed = true;
 			this->_parsingResult.status_code = 403;
@@ -168,6 +107,7 @@ bool Request::_handleFileRequest(const std::string &filePath) {
 		return (false);
 	}
 
+	this->_filePath = fullPath;
 	return (true);
 }
 
@@ -176,7 +116,6 @@ bool Request::_formatHeader(const std::string &headerLine) {
 
 	std::string index;
 	std::string value;
-
 
 	if (collon > 1) {
 		index = headerLine.substr(0, collon - 1);
@@ -200,8 +139,9 @@ bool Request::_formatHeader(const std::string &headerLine) {
 // GETTERS
 
 std::string Request::getMethod(void) const { return this->_method; }
-std::string Request::getUrl(void) const { return this->_url; }
+std::string Request::getUrl(void) const { return this->_filePath; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
+std::string Request::getFileName(void) const { return this->_fileName; }
 
 struct parsing Request::getParsing( void ) const { return this->_parsingResult; }
 std::map<std::string, std::string> Request::getHeaders(void) const { return this->_headers; }

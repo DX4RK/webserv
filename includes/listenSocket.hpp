@@ -1,10 +1,12 @@
 #pragma once
 
-#include <poll.h>
-#include <vector>
 #include <map>
-#include "request.hpp"
+#include <vector>
 #include <algorithm>
+
+#include <poll.h>
+
+#include "request.hpp"
 #include "bindingSocket.hpp"
 
 #define MAX_CLIENTS 100
@@ -23,6 +25,7 @@ private:
 	int _newSocket;
 	std::string _buffer;
 	//char _buffer[30000];
+	std::string response;
 
 	void accepter( void );
 	void handler( void );

@@ -1,6 +1,6 @@
 #include "../../includes/bindingSocket.hpp"
 
-BindingSocket::~BindingSocket(void) { close(this->_sock); }
+BindingSocket::~BindingSocket(void) { if (this->_sock >= 0) { close(this->_sock); } }
 
 BindingSocket::BindingSocket(int domain, int type, int protocol, int port, u_long interface) : Socket(domain, type, protocol, port, interface) {
 	int opt = 1;
