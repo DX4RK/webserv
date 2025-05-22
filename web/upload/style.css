@@ -94,17 +94,28 @@ nav {
 .title > p {
   margin: 0;
   line-height: 10rem;
+  letter-spacing: -0.4rem;
+  font-size: 7rem;
   width: auto;
+}
+
+.title > img {
+	margin: 0;
+	width: 8.5rem;
+	height: 6.5rem;
+	line-height: 10rem;
 }
 
 .title > p:nth-child(1){
   align-self: flex-start;
 }
 
-.title > p:nth-child(2){
+/*
+.title > p:nth-child(3){
   color: var(--primary);
   align-self: flex-end;
 }
+*/
 
 .title > p:nth-child(3){
   align-self: flex-end;
@@ -114,7 +125,6 @@ nav {
   display: none;
   fill: var(--text);
 }
-
 
 
 .button {
@@ -223,30 +233,28 @@ span {
 }
 
 
-
-
 @media screen and (max-width: 1000px) {
   .title {
     font-size: 4rem;
-    line-height: 
+    line-height:
   }
-  
+
   .title > p {
     line-height: 5rem;
     letter-spacing: -0.3rem;
   }
-  
+
   nav > :not(.sitename, .material-icons) {
     display: none;
   }
-  
+
   nav {
     justify-content: space-between;
   }
-  
+
   .material-icons {
     display: flex;
     align-items: center;
   }
-  
+
 }

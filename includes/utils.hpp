@@ -34,6 +34,7 @@ std::string ft_itoa(T num) {
 }
 
 std::string getTime(void);
+std::string getFileModifiedTime(std::string path);
 std::vector<std::string> getLines(std::string buffer);
 std::vector<std::string> splitString(std::string str);
 std::string getLastSub(const std::string& src, char c);

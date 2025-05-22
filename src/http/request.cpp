@@ -10,6 +10,7 @@ Request::Request(ListenSocket &listener) {
 	this->_parsingResult.proceed = false;
 	this->_parsingResult.status_code = 0;
 	this->_parsingResult.status_message = "";
+	this->_parsingResult.method_allowed = false;
 
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
@@ -24,21 +25,18 @@ Request::Request(ListenSocket &listener) {
 			this->_parsingResult.status_code = 400;
 			this->_parsingResult.proceed = true;
 			this->_parsingResult.status_message = "Invalid " + method + " method";
-			throw std::exception();
 		}
 
 		if (protocolValid(protocol)) { this->_protocol = protocol; } else {
 			this->_parsingResult.status_code = 400;
 			this->_parsingResult.proceed = true;
 			this->_parsingResult.status_message = "Invalid protocol version";
-			throw std::exception();
 		}
 
-		if (!this->_handleFileRequest(url)) { throw std::exception(); }
+		this->_handleFileRequest(url);
 
 	} catch ( std::exception &e ) {
-		//std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
-		//std::cout << this->_parsingResult.status_message << std::endl;
+		std::cout << "Server crashed." << std::endl;
 		return;
 	}
 
@@ -51,12 +49,10 @@ Request::Request(ListenSocket &listener) {
 				this->_parsingResult.status_code = 400;
 				this->_parsingResult.proceed = true;
 				this->_parsingResult.status_message = "Invalid header " + i;
-				throw std::exception();
 			}
 		}
 	} catch ( std::exception &e ) {
-		//std::cout << "Error: " << this->_parsingResult.status_code << std::endl;
-		//std::cout << this->_parsingResult.status_message << std::endl;
+		std::cout << "Server crashed." << std::endl;
 		return;
 	}
 
@@ -70,6 +66,7 @@ Request::Request(ListenSocket &listener) {
 		this->_parsingResult.proceed = true;
 		this->_parsingResult.status_code = 200;
 		this->_parsingResult.status_message = "OK";
+		this->_parsingResult.method_allowed = true;
 	}
 
 	// REQUEST DATA IS READY TO MAKE RESPONSE
@@ -83,7 +80,12 @@ bool Request::_handleFileRequest(const std::string &filePath) {
 	if (!fileExists(fullPath)) {
 		this->_parsingResult.proceed = true;
 		this->_parsingResult.status_code = 404;
-		this->_parsingResult.status_message = "File does not exist";
+		this->_parsingResult.method_allowed = true;
+		this->_parsingResult.status_message = "Not Found";
+
+		this->_method = "GET";
+		this->_filePath = NOT_FOUND_PAGE;
+		this->_fileName = getLastSub(fullPath, '/');
 		return (false);
 	}
 
@@ -103,7 +105,7 @@ bool Request::_handleFileRequest(const std::string &filePath) {
 	if (!hasReadPermission(fullPath)) {
 		this->_parsingResult.proceed = true;
 		this->_parsingResult.status_code = 403;
-		this->_parsingResult.status_message = "No read permission";
+		this->_parsingResult.status_message = "No Premissions";
 		return (false);
 	}
 

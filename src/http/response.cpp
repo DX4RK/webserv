@@ -8,27 +8,41 @@ Response::Response(Request &request) {
 	this->_response = request.getProtocol() + " " + ft_itoa(parsingResult.status_code) + " " + parsingResult.status_message + "\n";
 
 	// HEADERS
-	this->_response += "Date: " + getTime() + "\n";
-	this->_response += "Server: server\n";
+	this->_headers += "Server: webserv/1.0\n";
+	this->_headers += "Date: " + getTime() + "\n";
 
-	this->_processRequest(request.getMethod(), request);
+	if (parsingResult.method_allowed) {
+		Method methodResult = this->_processRequest(request.getMethod(), request);
+
+		this->_response += this->_headers += "\n";
+		this->_response += methodResult.getContent();
+	}
+
 }
 
 Response::~Response( void ) {
 	this->_response = "";
 }
 
-void Response::_processRequest(std::string method, Request &request) {
+Method Response::_processRequest(std::string method, Request &request) {
 	if (method.compare("GET") == 0) {
 		Get methodResult(request);
-		methodResult.process(request);
-		this->_response += "Content-Type: " + getContentType(request.getUrl()) + "\n";
-		this->_response += "Content-Length: " + ft_itoa(methodResult.getContentLength()) + "\n";
-		this->_response += "\n";
-		this->_response += methodResult.getContent();
+		methodResult.process(*this, request);
+		//this->_response += "\n";
+		//this->_response += methodResult.getContent();
+		return methodResult;
 	}
+	Get methodResult(request);
+	methodResult.process(*this, request);
+	//this->_response += "\n";
+	//this->_response += methodResult.getContent();
+	return methodResult;
 }
 
 std::string Response::getResponse(void) {
 	return (this->_response);
+}
+
+void Response::addHeader(std::string headerName, std::string headerValue) {
+	this->_headers += headerName + ": " + headerValue + "\n";
 }

@@ -2,16 +2,16 @@
 
 #include <iostream>
 
+#include "config.hpp"
 #include "response.hpp"
 #include "listenSocket.hpp"
-
-#define WEB_ROOT "./web"
 
 class ListenSocket;
 
 struct parsing {
 	bool proceed;
 	int status_code;
+	bool method_allowed;
 	std::string status_message;
 
 };

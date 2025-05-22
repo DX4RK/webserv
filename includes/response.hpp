@@ -15,9 +15,12 @@ public:
 	~Response( void );
 
 	std::string getResponse( void );
+
+	void addHeader( std::string headerName, std::string headerValue );
 private:
 	Response( void );
 
 	std::string _response;
-	void _processRequest(std::string method, Request &request);
+	std::string _headers;
+	Method _processRequest(std::string method, Request &request);
 };

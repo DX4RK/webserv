@@ -1,12 +1,27 @@
 #include "../includes/utils.hpp"
 
-std::string getTime(void) {
-	time_t timestamp = time(NULL);
-	struct tm datetime = *gmtime(&timestamp);
-
+std::string formatDateTime(tm datetime) {
 	char output[50];
 	strftime(output, 50, "%a, %e %b %Y %H:%M:%S GMT", &datetime);
 	return static_cast<std::string>(output);
+}
+
+std::string getTime(void) {
+	time_t timestamp = time(NULL);
+	struct tm datetime = *gmtime(&timestamp);
+	return static_cast<std::string>(formatDateTime(datetime));
+}
+
+std::string getFileModifiedTime(std::string path) {
+	struct stat result;
+	timespec ts;
+	if (stat(path.c_str(), &result) == 0) {
+		ts = result.st_mtim;
+		time_t timestamp = ts.tv_nsec;
+		struct tm datetime = *gmtime(&timestamp);
+		return static_cast<std::string>(formatDateTime(datetime));
+	}
+	return "";
 }
 
 void make_error(std::string errorMessage, int exitCode) {

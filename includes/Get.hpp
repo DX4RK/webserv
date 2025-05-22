@@ -7,9 +7,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "utils.hpp"
 #include "method.hpp"
 #include "request.hpp"
 
+class Response;
 class Request;
 
 class Get : public Method {
@@ -17,7 +19,7 @@ public:
 	Get( Request &rq );
 	~Get( void );
 
-	void process( Request &rq );
+	void process( Response &response, Request &request );
 private:
 	Get( void );
 

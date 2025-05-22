@@ -11,8 +11,8 @@ public:
 	virtual ~Method( void );
 
 	std::string getContent( void );
-	std::string getContentType( void );
-	long 		getContentLength( void );
+	//std::string getContentType( void );
+	//long 		getContentLength( void );
 protected:
 	std::string _content;
 	std::string	_contentType;
