@@ -10,11 +10,12 @@
 #include <netinet/in.h>
 
 #include "utils.hpp"
+#include "config.hpp"
 
 class Socket
 {
 public:
-	Socket( int domain, int type, int protocol, int port, u_long interface );
+	Socket( int domain, int type, int protocol, u_long interface, Config &server_config );
 	~Socket( void );
 
 	int get_sock( void ) const;

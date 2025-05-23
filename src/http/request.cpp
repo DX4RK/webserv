@@ -3,7 +3,7 @@
 /* MAIN */
 
 Request::Request(void) {}
-Request::Request(ListenSocket &listener) {
+Request::Request(ListenSocket &listener, Config &server_config) {
 
 	// INIT //
 
@@ -17,10 +17,10 @@ Request::Request(ListenSocket &listener) {
 
 	// REQUEST LINE //
 
-	try {
-		std::vector<std::string> words = splitString(lines.at(0));
-		std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
+	std::vector<std::string> words = splitString(lines.at(0));
+	std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
 
+	try {
 		if (methodValid(method)) { this->_method = method; } else {
 			this->_parsingResult.status_code = 400;
 			this->_parsingResult.proceed = true;
@@ -32,9 +32,6 @@ Request::Request(ListenSocket &listener) {
 			this->_parsingResult.proceed = true;
 			this->_parsingResult.status_message = "Invalid protocol version";
 		}
-
-		this->_handleFileRequest(url);
-
 	} catch ( std::exception &e ) {
 		std::cout << "Server crashed." << std::endl;
 		return;
@@ -45,22 +42,31 @@ Request::Request(ListenSocket &listener) {
 	try {
 		for (size_t i = 0; i < lines.size(); i++) {
 			if (lines.at(i) == "\n") { break; }
-			if (this->_formatHeader(lines.at(i))) {
-				this->_parsingResult.status_code = 400;
-				this->_parsingResult.proceed = true;
-				this->_parsingResult.status_message = "Invalid header " + i;
-			}
+			this->_formatHeader(lines.at(i));
 		}
 	} catch ( std::exception &e ) {
 		std::cout << "Server crashed." << std::endl;
 		return;
 	}
 
+	const std::string root_page = server_config.getLocationRoot("/");
+	this->_handleFileRequest(root_page, url);
+
 	// BODY //
 
 		/*! MAKE BODY GESTION FOR INTERACTIVE METHODS !*/
 
 	// IF EVERYTHING NO PROCEED = EVERYTHING OK
+
+	//for (std::map<std::string, std::string>::iterator it = this->_headers.begin(); it != this->_headers.end(); ++it) {
+   //   std::cout << it->first << ": " << it->second << std::endl;
+    //}
+
+	//if (this->_headers.) {
+	//	std::cout << "uhm!" << std::endl;
+	//}
+
+	//std::cout << this->_headers["Accept"] << std::endl;
 
 	if (!this->_parsingResult.proceed) {
 		this->_parsingResult.proceed = true;
@@ -72,8 +78,18 @@ Request::Request(ListenSocket &listener) {
 	// REQUEST DATA IS READY TO MAKE RESPONSE
 }
 
-bool Request::_handleFileRequest(const std::string &filePath) {
-	std::string fullPath = WEB_ROOT + filePath;
+bool Request::_handleFileRequest(const std::string root, const std::string &filePath) {
+	std::string fullPath = root + filePath;
+
+	std::map<std::string, std::string>::const_iterator it = this->_headers.find("Referer");
+
+	if (it != this->_headers.end()) {
+		std::string path = extractPath(this->_headers["Referer"]);
+		std::cout << path << std::endl;
+		fullPath = WEB_ROOT + trim(path) + trim(filePath);
+	}
+
+	//std::cout << this
 
 	this->_fileName = getLastSub(fullPath, '/');
 
@@ -120,11 +136,11 @@ bool Request::_formatHeader(const std::string &headerLine) {
 	std::string value;
 
 	if (collon > 1) {
-		index = headerLine.substr(0, collon - 1);
+		index = headerLine.substr(0, collon);
 		value = headerLine.substr(collon + 1, headerLine.length());
 	} else { return false; }
 
-	if (index.length() <= 0 || value.length() <= 0 || value[value.length()] != '\n') { return false; }
+	if (index.length() <= 0 || value.length() <= 0) { return false; }
 
 	for (size_t i = 0; i <= value.length(); i++) {
 		if (isspace(value[i])) { continue; } else {
@@ -134,6 +150,7 @@ bool Request::_formatHeader(const std::string &headerLine) {
 	}
 
 	if (value.length() <= 0) { return false; }
+	this->_headers[index] = value;
 
 	return(true);
 }

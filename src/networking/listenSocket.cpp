@@ -36,8 +36,8 @@ void ListenSocket::accepter(void) {
 	}
 }
 
-void ListenSocket::handler(void) {
-	Request request(*this);
+void ListenSocket::handler(Config &server_config) {
+	Request request(*this, server_config);
 	Response response(request);
 
 	this->response = response.getResponse();
@@ -65,11 +65,11 @@ void ListenSocket::responder(void) {
 	this->response = "";
 }
 
-void ListenSocket::launch(void) {
+void ListenSocket::launch(Config &server_config) {
 	while (true) {
 		std::cout << "----------------------------------------" << std::endl;
 		this->accepter();
-		this->handler();
+		this->handler(server_config);
 		this->responder();
 	}
 }

@@ -17,7 +17,7 @@ public:
 	~ListenSocket( void );
 	ListenSocket( BindingSocket &mainSocket );
 
-	void launch( void );
+	void launch( Config &server_config );
 	std::string getBuffer( void ) const;
 private:
 	ListenSocket( void );
@@ -28,7 +28,7 @@ private:
 	std::string response;
 
 	void accepter( void );
-	void handler( void );
+	void handler( Config &server_config );
 	void responder( void );
 	//void remove_socket(int clientSock);
 

@@ -4,7 +4,7 @@
 
 class ConnectSocket : public Socket {
 public:
-	ConnectSocket( int domain, int type, int protocol, int port, u_long interface );
+	ConnectSocket( int domain, int type, int protocol, u_long interface, Config &server_config );
 	~ConnectSocket( void );
 
 	int connect_network(int sock, struct sockaddr_in adress);

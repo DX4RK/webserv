@@ -128,3 +128,30 @@ std::string getContentType(const std::string& fileName) {
 	}
 	return "application/octet-stream";
 }
+
+std::string extractPath(const std::string& url) {
+	std::size_t protocolPos = url.find("://");
+	std::size_t startOfPath;
+
+	if (protocolPos != std::string::npos) {
+		startOfPath = url.find("/", protocolPos + 3);
+	} else {
+		startOfPath = url.find("/");
+	}
+
+	if (startOfPath != std::string::npos) {
+		return url.substr(startOfPath);
+	}
+
+	return "";
+}
+
+bool isCGIRequest(const std::string& path) {
+	return path.find("/cgi-bin/") == 0;
+}
+
+std::string trim(const std::string& str) {
+	size_t start = str.find_first_not_of(" \t\n\r");
+	size_t end = str.find_last_not_of(" \t\n\r");
+	return (start != std::string::npos) ? str.substr(start, end - start + 1) : "";
+}

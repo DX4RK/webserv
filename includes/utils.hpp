@@ -34,6 +34,8 @@ std::string ft_itoa(T num) {
 }
 
 std::string getTime(void);
+std::string trim(const std::string& str);
+std::string extractPath(const std::string& url);
 std::string getFileModifiedTime(std::string path);
 std::vector<std::string> getLines(std::string buffer);
 std::vector<std::string> splitString(std::string str);
@@ -43,6 +45,7 @@ std::string getContentType(const std::string& file_path);
 void initMimes();
 void make_error(std::string errorMessage, int exitCode);
 
+bool isCGIRequest(const std::string& path);
 bool fileExists(const std::string &filePath);
 bool isDirectory(const std::string &path);
 bool hasReadPermission(const std::string &filePath);

@@ -19,7 +19,7 @@ struct parsing {
 class Request {
 public:
 	Request( void );
-	Request( ListenSocket &listener );
+	Request( ListenSocket &listener, Config &server_config );
 
 	std::string getMethod( void ) const;
 	std::string getUrl( void ) const;
@@ -29,14 +29,15 @@ public:
 	struct parsing getParsing( void ) const;
 	std::map<std::string, std::string> getHeaders( void ) const;
 private:
+	std::string _refer;
 	std::string _method;
 	std::string _protocol;
 	std::string _filePath;
 	std::string _fileName;
 	std::map<std::string, std::string> _headers;
 
-	bool _formatHeader(const std::string &headerLine);
-	bool _handleFileRequest(const std::string &filePath);
+	bool _formatHeader( const std::string &headerLine );
+	bool _handleFileRequest( const std::string root, const std::string &filePath );
 
 	struct parsing _parsingResult;
 };
