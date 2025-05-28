@@ -33,16 +33,19 @@ Request::Request(ListenSocket &listener, Config &server_config) {
 	for (size_t i = 0; i < lines.size(); i++) {
 		if (lines.at(i) == "\n") { body_line = i; break; }
 		this->_formatHeader(lines.at(i));
+		//body_line = i;
 	}
-	(void)body_line;
+
 	//const std::string root_page = server_config.getLocationRoot("/");
 	//this->_handleFileRequest(root_page, url);
 
 	// BODY //
 
-	//for (size_t i = body_line; i < lines.size(); i++) {
-	//	std::cout << lines.at(i) << std::endl;
-	//}
+	std::cout << std::endl << "----------------------------" << std::endl;
+
+	for (size_t i = body_line; i < lines.size(); i++) {
+		//std::cout << lines.at(i) << std::endl;
+	}
 		/*! MAKE BODY GESTION FOR INTERACTIVE METHODS !*/
 
 	// IF EVERYTHING NO PROCEED = EVERYTHING OK
