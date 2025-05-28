@@ -34,7 +34,7 @@ Request::Request(ListenSocket &listener, Config &server_config) {
 		if (lines.at(i) == "\n") { body_line = i; break; }
 		this->_formatHeader(lines.at(i));
 	}
-
+	(void)body_line;
 	//const std::string root_page = server_config.getLocationRoot("/");
 	//this->_handleFileRequest(root_page, url);
 
