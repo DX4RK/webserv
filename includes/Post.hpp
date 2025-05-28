@@ -14,10 +14,10 @@
 class Response;
 class Request;
 
-class Get : public Method {
+class Post : public Method {
 public:
-	Get( Request &request, Config &server_config );
-	~Get( void );
+	Post( Request &request, Config &server_config );
+	~Post( void );
 
 	void process( Response &response, Request &request, Config &server_config );
 private:
@@ -28,5 +28,5 @@ private:
 
 	bool _handleFileUrl(Request &request, const std::string root);
 
-	Get( void );
+	Post( void );
 };

@@ -1,0 +1,12 @@
+status {
+    OK                                        200;
+    Created                                   201;
+    No Content                                204;
+    Bad Request                               400;
+    Forbidden                                 403;
+    Not Found                                 404;
+    Method Not Allowed                        405;
+    Length Required                           411;
+    Content Too Large                         413;
+    Internal Server Error                     500;
+}

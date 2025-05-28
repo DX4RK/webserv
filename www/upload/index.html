@@ -31,14 +31,10 @@
 <div class="title">
 	<p class="title-text">UPLOAD</p>
 	<div class="upload-container">
-		<p>Select your file</p>
-		<a class="upload">
-			<p>Upload</p>
-			<form action="http://localhost:8080/" method="POST" enctype="multipart/form-data">
-				<input class="input" type="file" name="uploadedFile">
-				<button type="submit">Upload</button>
-			</form>
-		</a>
+		<form action="http://localhost:8080/cgi-bin/upload.py" method="POST" enctype="multipart/form-data">
+			<input class="input" type="file" name="uploadedFile">
+			<button type="submit">Upload</button>
+		</form>
 	</div>
 </div>
 

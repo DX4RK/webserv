@@ -30,31 +30,26 @@ void ListenSocket::accepter(void) {
 	this->_buffer = static_cast<std::string>(tempBuffer);
 
 	/* DEBUG */
-
-	{
-		std::cout << "Received request from [" << BOLD << LIGHT_CYAN << sock << RESET << "], now handling request." << std::endl;
-	}
 }
 
 void ListenSocket::handler(Config &server_config) {
 	Request request(*this, server_config);
-	Response response(request);
+	Response response(request, server_config);
 
 	this->response = response.getResponse();
+
 	/* DEBUG */
 
 	{
 		std::string status_color;
-		int status_code = request.getParsing().status_code;
-		std::cout << std::endl << "Request processed, status code: ";
+		int status_code = response.getResponseCode();
 
 		if (status_code >= 100) { status_color = BLUE; }
 		if (status_code >= 200) { status_color = GREEN; }
 		if (status_code >= 300) { status_color = LIGHT_CYAN; }
 		if (status_code >= 400) { status_color = RED; }
 
-		std::cout << status_color << BOLD << request.getParsing().status_code << RESET;
-		std::cout << ", message: " << status_color << request.getParsing().status_message << RESET << ", file_name: " << request.getFileName() << std::endl;
+		std::cout << "Received " << BOLD << LIGHT_PURPLE << request.getMethod() << RESET << " code: " << status_code << " url: " << request.getUrl() << std::endl;
 	}
 
 }
@@ -67,7 +62,6 @@ void ListenSocket::responder(void) {
 
 void ListenSocket::launch(Config &server_config) {
 	while (true) {
-		std::cout << "----------------------------------------" << std::endl;
 		this->accepter();
 		this->handler(server_config);
 		this->responder();

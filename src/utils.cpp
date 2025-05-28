@@ -120,14 +120,14 @@ void initMimes() {
 	mimes["ico"] = "image/vnd.microsoft.icon; charset=utf-8";
 }
 
-std::string getContentType(const std::string& fileName) {
+/*std::string getContentType(const std::string& fileName) {
 	std::string type = getLastSub(fileName, '.');
 	std::map<std::string, std::string>::iterator it = mimes.find(type);
 	if (it != mimes.end()) {
 		return it->second;
 	}
 	return "application/octet-stream";
-}
+}*/
 
 std::string extractPath(const std::string& url) {
 	std::size_t protocolPos = url.find("://");
@@ -150,8 +150,28 @@ bool isCGIRequest(const std::string& path) {
 	return path.find("/cgi-bin/") == 0;
 }
 
-std::string trim(const std::string& str) {
+std::string trim(const std::string& str, bool except_newline) {
 	size_t start = str.find_first_not_of(" \t\n\r");
 	size_t end = str.find_last_not_of(" \t\n\r");
+
+	if (except_newline) {
+		start = str.find_first_not_of(" \t\r");
+		end = str.find_last_not_of(" \t\r");
+	}
+
 	return (start != std::string::npos) ? str.substr(start, end - start + 1) : "";
+}
+
+int skip_space(std::string str) {
+	int no_space_index = 0;
+
+	for (size_t i = 0; i <= str.length(); i++) {
+		if (isspace(str[i])) {
+			no_space_index++;
+			continue;
+		} else
+			break;
+	}
+
+	return (no_space_index);
 }
