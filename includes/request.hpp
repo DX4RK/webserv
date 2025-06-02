@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include "_libs.hpp"
 
 #include "config.hpp"
 #include "response.hpp"
@@ -37,7 +37,6 @@ private:
 	Config *server_config;
 
 	bool _formatHeader( const std::string &headerLine );
-
 
 	Request( void );
 };

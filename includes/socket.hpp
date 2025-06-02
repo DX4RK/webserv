@@ -1,13 +1,6 @@
 #pragma once
 
-#include <cstring>
-#include <cstdlib>
-#include <iostream>
-
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "_libs.hpp"
 
 #include "utils.hpp"
 #include "config.hpp"

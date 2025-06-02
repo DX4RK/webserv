@@ -1,6 +1,6 @@
 #pragma once
 
-#include <iostream>
+#include "_libs.hpp"
 
 #include "Get.hpp"
 #include "Post.hpp"

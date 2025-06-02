@@ -19,7 +19,7 @@ void Get::process(Response &response, Request &request) {
 
 	if (this->_returnCode == 404 && (getLastSub(this->_fileName, '.') == this->_fileName || this->_fileName.find(".html"))) {
 		this->_fileName = "404";
-		this->_filePath = "./src/default_pages/404.html";
+		this->_filePath = "./src/_default/404.html";
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	} else if (this->_returnCode != 0) { return; }
 

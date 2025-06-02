@@ -13,7 +13,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
-	std::cout << buffer << std::endl;
+	
 	// REQUEST LINE //
 
 	std::vector<std::string> words = splitString(lines.at(0));

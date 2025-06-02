@@ -1,14 +1,6 @@
 #pragma once
 
-#include <map>
-#include <vector>
-#include <iostream>
-#include <algorithm>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "_libs.hpp"
 
 #include "utils.hpp"
 

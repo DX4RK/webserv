@@ -1,5 +1,7 @@
 #pragma once
 
+#include "_libs.hpp"
+
 #include "socket.hpp"
 
 class BindingSocket : public Socket {

@@ -1,11 +1,6 @@
 #pragma once
 
-#include <iostream>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "_libs.hpp"
 
 #include "utils.hpp"
 #include "method.hpp"

@@ -1,27 +1,20 @@
 #pragma once
 
-#include <map>
-#include <string>
-#include <vector>
-#include <vector>
-#include <sstream>
-#include <sstream>
-#include <iostream>
-
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include "_libs.hpp"
 
 #define BOLD "\e[1m"
 #define RESET "\e[0m"
+#define DIM "\e[2m"
 
 #define GREEN "\033[0;32m"
 #define RED "\033[0;31m"
 #define BLUE "\033[0;94m"
 
+#define LIGHT_BLUE "\033[94m"
 #define LIGHT_CYAN "\033[96m"
+#define LIGHT_GREEN "\033[92m"
+#define LIGHT_YELLOW "\033[93m"
+#define LIGHT_ORANGE "\033[91m"
 #define LIGHT_PURPLE "\033[95m"
 
 //std::map<std::string, std::string> mimes;

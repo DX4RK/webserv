@@ -1,7 +1,8 @@
 #pragma once
 
-#include <iostream>
+#include "_libs.hpp"
 
+#include "CGI.hpp"
 #include "config.hpp"
 
 class Request;
