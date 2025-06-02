@@ -20,8 +20,9 @@ void Post::process(Response &response, Request &request) {
 
 	if (request.isCgiEnabled()) {
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
+		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
+		cgi_handler.execute();
 	}
-
 	//char tempBuffer[30000] = {0};
 	//ssize_t bytesRead = recv(this., tempBuffer, 30000, 0);
 	//if (bytesRead < 0) { make_error("failed to read from socket", EXIT_FAILURE); }
