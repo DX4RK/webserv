@@ -19,22 +19,25 @@ OBJS = $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 BOLD=\e[1m
 RESET=\e[0m
 
+LIGHT_BLUE=\033[94m
 LIGHT_CYAN=\033[96m
+LIGHT_GREEN=\033[92m
+LIGHT_YELLOW=\033[93m
+LIGHT_ORANGE=\033[91m
 LIGHT_PURPLE=\033[95m
 
 # MAIN #
 
 all: $(NAME)
-	@echo "$(BOLD)$(LIGHT_CYAN)$(NAME) is ready!$(RESET)"
+	@printf "${LIGHT_BLUE}${BOLD}[$(NAME)]${RESET} built was successfull.\n"
+	@echo "$(LIGHT_CYAN)$(BOLD)[information]$(RESET) startup: $(LIGHT_PURPLE)$(BOLD)./$(NAME)$(RESET)"
 
 $(NAME): $(OBJS)
-	@echo "$(LIGHT_PURPLE)Building $(NAME)"
-	@echo "$(RESET)"
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Ensure OBJ_DIR mirrors SRC_DIR structure
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
+	@printf "${LIGHT_YELLOW}${BOLD}[>] ${LIGHT_ORANGE}Building: %-33.33s\r${RESET}" $@
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
