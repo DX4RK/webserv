@@ -1,9 +1,10 @@
-#include "../../includes/listenSocket.hpp"
+#include "listenSocket.hpp"
 
 ListenSocket::~ListenSocket(void) {}
 
-ListenSocket::ListenSocket(BindingSocket &mainSocket) : _socket(mainSocket) {
-	int sock = mainSocket.get_sock();
+ListenSocket::ListenSocket(BindingSocket *mainSocket, Config *config) : _socket(mainSocket) {
+	this->server_config = config;
+	int sock = mainSocket->get_sock();
 	if (listen(sock, 10) < 0) {
 		std::cerr << "failed to listen on socket!" << std::endl;
 		exit (EXIT_FAILURE);
@@ -15,24 +16,57 @@ std::string ListenSocket::getBuffer(void) const {
 }
 
 void ListenSocket::accepter(void) {
-	int sock = this->_socket.get_sock();
-	struct sockaddr_in adress = this->_socket.get_address();
+	int sock = this->_socket->get_sock();
+	struct sockaddr_in adress = this->_socket->get_address();
 	int adress_len = sizeof(adress);
 
 	this->_newSocket = accept(sock, (struct sockaddr *)&adress, (socklen_t*)&adress_len);
-	if (this->_newSocket < 0) { make_error("failed to accept socket", EXIT_FAILURE); }
+	if (this->_newSocket < 0) {
+		make_error("failed to accept socket", EXIT_FAILURE);
+	}
 
-	char tempBuffer[30000] = {0};
-	ssize_t bytesRead = read(this->_newSocket, tempBuffer, 30000);
-	if (bytesRead < 0) { make_error("failed to read from socket", EXIT_FAILURE); }
+	char tempBuffer[4096];
 
-	tempBuffer[bytesRead] = '\0';
-	this->_buffer = static_cast<std::string>(tempBuffer);
+	ssize_t bytesRead;
+	size_t contentLength = 0;
 
-	/* DEBUG */
+	std::string request;
+	bool headersParsed = false;
+
+	while (true) {
+		bytesRead = recv(this->_newSocket, tempBuffer, sizeof(tempBuffer) - 1, 0);
+		if (bytesRead <= 0) break;
+
+		tempBuffer[bytesRead] = '\0';
+		request.append(tempBuffer, bytesRead);
+
+		if (!headersParsed) {
+			size_t headerEnd = request.find("\r\n\r\n");
+			if (headerEnd != std::string::npos) {
+				headersParsed = true;
+
+				std::string headers = request.substr(0, headerEnd);
+				size_t pos = headers.find("Content-Length:");
+				if (pos != std::string::npos) {
+					size_t start = headers.find_first_of("0123456789", pos);
+					if (start != std::string::npos) {
+						contentLength = std::atoi(headers.c_str() + start);
+					}
+				}
+
+				size_t totalNeeded = headerEnd + 4 + contentLength;
+				if (request.size() >= totalNeeded) break;
+			}
+		} else {
+			size_t headerEnd = request.find("\r\n\r\n");
+			size_t totalNeeded = headerEnd + 4 + contentLength;
+			if (request.size() >= totalNeeded) break;
+		}
+	}
+
+	this->_buffer = request;
 }
-
-void ListenSocket::handler(Config &server_config) {
+void ListenSocket::handler() {
 	Request request(*this, server_config);
 	Response response(request, server_config);
 
@@ -60,10 +94,10 @@ void ListenSocket::responder(void) {
 	this->response = "";
 }
 
-void ListenSocket::launch(Config &server_config) {
+void ListenSocket::launch() {
 	while (true) {
 		this->accepter();
-		this->handler(server_config);
+		this->handler();
 		this->responder();
 	}
 }

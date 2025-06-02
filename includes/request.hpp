@@ -10,8 +10,7 @@ class ListenSocket;
 
 class Request {
 public:
-	Request( void );
-	Request( ListenSocket &listener, Config &server_config );
+	Request( ListenSocket &listener, Config *config );
 
 	int getStatusCode( void ) const;
 
@@ -20,23 +19,25 @@ public:
 	std::string getProtocol( void ) const;
 
 	bool isCgiEnabled( void ) const;
+	std::string findHeader( std::string index );
 
 	std::map<std::string, std::string> getHeaders( void ) const;
 private:
 	int	_statusCode;
+	bool _cgiEnabled;
 
 	std::string _url;
 	std::string _refer;
+	std::string _body;
 	std::string _method;
 	std::string _protocol;
 
-	bool _cgiEnabled;
-
-	std::string _body;
-
 	std::map<std::string, std::string> _headers;
 
-	//bool _cgiFormatted;
+	Config *server_config;
+
 	bool _formatHeader( const std::string &headerLine );
-	//bool _handleFileRequest( const std::string root, const std::string &filePath );
+
+
+	Request( void );
 };

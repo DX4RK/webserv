@@ -1,8 +1,10 @@
 #include "response.hpp"
 
 Response::Response(void) {}
-Response::Response(Request &request, Config &server_config) {
+Response::Response(Request &request, Config *config) {
 	//struct parsing parsingResult = request.getParsing();
+
+	this->server_config = config;
 	this->_responseCode = request.getStatusCode();
 
 	std::string methodHeaders = "";
@@ -12,7 +14,7 @@ Response::Response(Request &request, Config &server_config) {
 	this->addHeader("Date", getTime());
 
 	if (this->_responseCode == 0) {
-		Method methodResult = this->_processRequest(request.getMethod(), request, server_config);
+		Method methodResult = this->_processRequest(request.getMethod(), request);
 		this->_responseCode = methodResult.getReturnCode();
 
 		if (this->_responseCode == 0) { this->_responseCode = 500; return; }
@@ -23,7 +25,7 @@ Response::Response(Request &request, Config &server_config) {
 	// RESPONSE LINE
 
 	std::string responseCode = ft_itoa(this->_responseCode);
-	std::string responseMessage = server_config.getStatusCode(responseCode);
+	std::string responseMessage = this->server_config->getStatusCode(responseCode);
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
 	this->_response += this->_headers + "\n" + methodContent;
@@ -33,18 +35,19 @@ Response::~Response( void ) {
 	this->_response = "";
 }
 
-Method Response::_processRequest(std::string method, Request &request, Config &server_config) {
+Method Response::_processRequest(std::string method, Request &request) {
 	if (method.compare("GET") == 0) {
 		Get methodResult(request, server_config);
-		methodResult.process(*this, request, server_config);
+		methodResult.process(*this, request);
 		return methodResult;
 	} else if (method.compare("POST") == 0) {
 		Post methodResult(request, server_config);
-		methodResult.process(*this, request, server_config);
+		methodResult.process(*this, request);
 		return methodResult;
 	}
 
-	Method methodResult(request, server_config);
+	Method methodResult;
+	//Method methodResult(request, server_config);
 	return methodResult;
 }
 

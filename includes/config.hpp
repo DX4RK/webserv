@@ -12,6 +12,9 @@
 
 #include "utils.hpp"
 
+#define VERSION "1.0"
+#define SERVER_NAME "webserv"
+
 #define MIME_TYPES_PATH "./config/mandatory/mime.types"
 #define CODE_STATUS_PATH "./config/mandatory/code.status"
 
@@ -34,7 +37,9 @@ class Config {
 public:
 	Config( std::string configPath );
 
-	int getPort( void ) const;
+	int getServerPort( void ) const;
+	std::string getServerInfo( void ) const ;
+	std::string getServerName( void ) const ;
 	std::string getLocationRoot( std::string path );
 	std::string getStatusCode(const std::string& code);
 	std::string getContentType(const std::string& fileName);

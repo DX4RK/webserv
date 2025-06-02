@@ -12,10 +12,10 @@ class Request;
 
 class Response {
 public:
-	Response( Request &request, Config &server_config );
+	Response( Request &request, Config *config );
 	~Response( void );
 
-	int getResponseCode(void) const;
+	int getResponseCode( void ) const;
 	std::string getResponse( void ) const;
 
 	void addHeader( std::string headerName, std::string headerValue );
@@ -25,7 +25,9 @@ private:
 	std::string _response;
 	std::string _headers;
 
-	Method _processRequest(std::string method, Request &request, Config &server_config);
+	Config *server_config;
+	Method _processRequest( std::string method, Request &request );
+
 
 	Response( void );
 };

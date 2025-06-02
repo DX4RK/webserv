@@ -4,13 +4,14 @@
 
 int main(void) {
 
-	initMimes();
+	//initMimes();
 
-	Config config("test");
+	Config *config = new Config("test");
 	BindingSocket main_socket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config);
-	ListenSocket listener(main_socket);
+	ListenSocket listener(&main_socket, config);
 
-	listener.launch(config);
+	listener.launch();
 
+	delete config;
 	return 0;
 }

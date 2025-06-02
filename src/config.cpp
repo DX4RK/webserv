@@ -42,7 +42,7 @@ std::string Config::getStatusCode(const std::string& code) {
 
 /* GETTERS & SETTERS */
 
-int Config::getPort( void ) const { return this->_port; }
+int Config::getServerPort( void ) const { return this->_port; }
 
 std::string Config::getLocationRoot( std::string path ) {
 	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
@@ -98,3 +98,12 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 
 	return ;
 }
+
+std::string Config::getServerInfo() const {
+	std::string main = SERVER_NAME;
+	main += "/";
+	main += VERSION;
+	return main;
+}
+
+std::string Config::getServerName() const { return this->_serverName; }

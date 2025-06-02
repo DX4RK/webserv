@@ -10,16 +10,17 @@
 #include "utils.hpp"
 #include "method.hpp"
 #include "request.hpp"
+#include "response.hpp"
 
 class Response;
-class Request;
 
 class Post : public Method {
 public:
-	Post( Request &request, Config &server_config );
+	Post( void );
+	Post( Request &request, Config *config );
 	~Post( void );
 
-	void process( Response &response, Request &request, Config &server_config );
+	void process( Response &response, Request &request );
 private:
 	int _fileFd;
 
@@ -27,6 +28,4 @@ private:
 	std::string _filePath;
 
 	bool _handleFileUrl(Request &request, const std::string root);
-
-	Post( void );
 };

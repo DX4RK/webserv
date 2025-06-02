@@ -1,9 +1,11 @@
-#include "../../includes/bindingSocket.hpp"
+#include "bindingSocket.hpp"
 
 BindingSocket::~BindingSocket(void) { if (this->_sock >= 0) { close(this->_sock); } }
 
-BindingSocket::BindingSocket(int domain, int type, int protocol, u_long interface, Config &server_config) : Socket(domain, type, protocol, interface, server_config) {
+BindingSocket::BindingSocket(int domain, int type, int protocol, u_long interface, Config *config) : Socket(domain, type, protocol, interface, config) {
 	int opt = 1;
+	this->server_config = config;
+
 	if (setsockopt(this->_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
 		std::cerr << "Error setting SO_REUSEADDR." << std::endl;
 		exit(EXIT_FAILURE);

@@ -1,4 +1,4 @@
-#include "../includes/utils.hpp"
+#include "utils.hpp"
 
 std::string formatDateTime(tm datetime) {
 	char output[50];
@@ -174,4 +174,42 @@ int skip_space(std::string str) {
 	}
 
 	return (no_space_index);
+}
+
+std::string ft_upper(std::string str) {
+	for (size_t i = 0; i < str.length(); i++) {
+		if (str[i] >= 'a' && str[i] <= 'z') {
+			str[i] = str[i] + 32;
+		}
+	}
+	return str;
+}
+
+size_t	ft_strlen(const char *str)
+{
+	size_t	index;
+
+	index = 0;
+	while (str[index] != '\0')
+	{
+		index++;
+	}
+	return (index);
+}
+
+char	*ft_strdup(const char *str)
+{
+	size_t	i;
+	char *ptr = new char[ft_strlen(str) + 1];
+
+	i = 0;
+	if (!ptr)
+		return (NULL);
+	while (str[i] != '\0')
+	{
+		ptr[i] = str[i];
+		i++;
+	}
+	ptr[i] = '\0';
+	return (ptr);
 }

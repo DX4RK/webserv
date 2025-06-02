@@ -15,25 +15,25 @@
 class ListenSocket {
 public:
 	~ListenSocket( void );
-	ListenSocket( BindingSocket &mainSocket );
+	ListenSocket( BindingSocket *mainSocket, Config *config );
 
-	void launch( Config &server_config );
+	void launch( void );
 	std::string getBuffer( void ) const;
 private:
-	ListenSocket( void );
-
 	int _newSocket;
-	std::string _buffer;
-	//char _buffer[30000];
-	std::string response;
 
-	void accepter( void );
-	void handler( Config &server_config );
-	void responder( void );
-	//void remove_socket(int clientSock);
+	std::string _buffer;
+	std::string response;
 
 	std::vector<pollfd> _pollfds;
 	std::map<int, std::string> _clientBuffers;
 
-	BindingSocket _socket;
+	BindingSocket *_socket;
+	Config *server_config;
+
+	void accepter( void );
+	void handler( void );
+	void responder( void );
+
+	ListenSocket( void );
 };

@@ -1,25 +1,20 @@
 #include "Get.hpp"
 
 Get::Get(void) {}
-Get::Get(Request &request, Config &server_config) {
+Get::Get(Request &request, Config *config) {
 	this->_returnCode = 0;
-	const std::string root_page = server_config.getLocationRoot("/");
+	this->server_config = config;
+
+	const std::string root_page = this->server_config->getLocationRoot("/");
 
 	bool canProcess = this->_handleFileUrl(request, root_page);
 
-	if (!canProcess) {
-		//if (this->_fileName == "index") {
-		//	this->_fileName = "404";
-		///	this->_filePath = "./src/default_pages/404.html";
-		//} else return;
-		return;
-	}
-
+	if (!canProcess) { return; }
 	this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 }
 Get::~Get(void) {}
 
-void Get::process(Response &response, Request &request, Config &server_config) {
+void Get::process(Response &response, Request &request) {
 	(void)request;
 
 	if (this->_returnCode == 404 && (getLastSub(this->_fileName, '.') == this->_fileName || this->_fileName.find(".html"))) {
@@ -41,7 +36,7 @@ void Get::process(Response &response, Request &request, Config &server_config) {
 	close(this->_fileFd);
 	if (this->_returnCode == 0) { this->_returnCode = 200; }
 
-	response.addHeader("Content-Type", server_config.getContentType(this->_filePath));
+	response.addHeader("Content-Type", this->server_config->getContentType(this->_filePath));
 	response.addHeader("Content-Length", ft_itoa(bytesRead));
 	response.addHeader("Last-Modified", getFileModifiedTime(this->_filePath));
 }

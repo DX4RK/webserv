@@ -15,7 +15,7 @@
 class Socket
 {
 public:
-	Socket( int domain, int type, int protocol, u_long interface, Config &server_config );
+	Socket( int domain, int type, int protocol, u_long interface, Config *config );
 	~Socket( void );
 
 	int get_sock( void ) const;
@@ -26,6 +26,8 @@ protected:
 	int _sock;
 	int _connection;
 	struct sockaddr_in adress;
+
+	Config *server_config;
 private:
 	Socket( void );
 };

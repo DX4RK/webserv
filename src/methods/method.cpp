@@ -3,10 +3,11 @@
 Method::Method(void) {}
 Method::~Method(void) {}
 
-Method::Method(Request &request, Config &server_config) {
-	this->_returnCode = 0;
-	(void)request; (void)server_config;
-}
+//Method::Method(Request &request, Config *config) {
+//	this->_returnCode = 0;
+//	this->server_config = config;
+//	(void)request;
+//}
 
 int Method::getReturnCode( void ) { return this->_returnCode; }
 std::string Method::getContent(void) { return this->_content; }

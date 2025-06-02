@@ -36,6 +36,7 @@ std::string ft_itoa(T num) {
 int skip_space(std::string str);
 
 std::string getTime(void);
+std::string ft_upper(std::string str);
 std::string extractPath(const std::string& url);
 std::string getFileModifiedTime(std::string path);
 std::vector<std::string> getLines(std::string buffer);
@@ -46,6 +47,8 @@ std::string trim(const std::string& str, bool except_newline);
 
 void initMimes();
 void make_error(std::string errorMessage, int exitCode);
+
+char	*ft_strdup(const char *str);
 
 bool isCGIRequest(const std::string& path);
 bool fileExists(const std::string &filePath);

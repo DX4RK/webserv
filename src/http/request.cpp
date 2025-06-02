@@ -3,58 +3,51 @@
 /* MAIN */
 
 Request::Request(void) {}
-Request::Request(ListenSocket &listener, Config &server_config) {
-	(void)server_config;
+Request::Request(ListenSocket &listener, Config *config) {
+
 	// INIT //
 
+	this->_body = "";
 	this->_statusCode = 0;
+	this->server_config = config;
 
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
-
+	std::cout << buffer << std::endl;
 	// REQUEST LINE //
-	// aborted crash fixed
+
 	std::vector<std::string> words = splitString(lines.at(0));
-	if (words.size() < 3) 
-	{
-    	this->_statusCode = 400;
-    	return;
-	}
 	std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
 
 	this->_url = url;
 
 	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
-	//if (this->_url.substr())
 
-	if(this->_url.find("/cgi-bin/")) {
-		this->_cgiEnabled = true;
-	}
+	if(this->_url.find("/cgi-bin/")) { this->_cgiEnabled = true; }
 
 	// HEADERS //
 
 	size_t body_line = 0;
-	for (size_t i = 0; i < lines.size(); i++) {
-		if (lines.at(i) == "\n") { body_line = i; break; }
-		this->_formatHeader(lines.at(i));
-		//body_line = i;
-	}
+	for (size_t i = 0; i < lines.size(); ++i) {
+		std::string line = lines.at(i);
+		if (line == "" || line == "\r") { body_line = i + 1; break; }
+		this->_formatHeader(line);
 
-	//const std::string root_page = server_config.getLocationRoot("/");
-	//this->_handleFileRequest(root_page, url);
+	}
 
 	// BODY //
 
-	std::cout << std::endl << "----------------------------" << std::endl;
+	size_t body_end = (lines.size() - 1);
+	if ((lines.size() - 1) > body_line) {
+		for (size_t i = body_line; i < body_end; i++) {
+			std::string jump = "\n";
+			std::string line = lines.at(i);
 
-	for (size_t i = body_line; i < lines.size(); i++) {
-		//std::cout << lines.at(i) << std::endl;
+			if (i + 1 >= body_end) { jump = ""; }
+			this->_body += trim(line, false) + jump;
+		}
 	}
-		/*! MAKE BODY GESTION FOR INTERACTIVE METHODS !*/
-
-	// IF EVERYTHING NO PROCEED = EVERYTHING OK
-
 	return;
 }
 
@@ -87,8 +80,17 @@ bool Request::_formatHeader(const std::string &headerLine) {
 // GETTERS
 
 int Request::getStatusCode(void) const { return this->_statusCode; }
+bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
+
 std::string Request::getMethod(void) const { return this->_method; }
 std::string Request::getUrl(void) const { return this->_url; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
 
 std::map<std::string, std::string> Request::getHeaders(void) const { return this->_headers; }
+
+std::string Request::findHeader( std::string index ) {
+	std::map<std::string, std::string>::const_iterator it = this->_headers.find(index);
+
+	if (it != this->_headers.end()) return (it->second);
+	throw std::exception();
+}

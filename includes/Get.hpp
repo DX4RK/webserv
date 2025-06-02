@@ -16,10 +16,10 @@ class Request;
 
 class Get : public Method {
 public:
-	Get( Request &request, Config &server_config );
+	Get( Request &request, Config *config );
 	~Get( void );
 
-	void process( Response &response, Request &request, Config &server_config );
+	void process( Response &response, Request &request );
 private:
 	int _fileFd;
 
@@ -27,6 +27,7 @@ private:
 	std::string _filePath;
 
 	bool _handleFileUrl(Request &request, const std::string root);
+
 
 	Get( void );
 };
