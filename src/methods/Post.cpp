@@ -19,7 +19,7 @@ void Post::process(Response &response, Request &request) {
 	if (this->_returnCode == 0) { this->_returnCode = 200; }
 
 	if (request.isCgiEnabled()) {
-	//	CGI cgi_handler();
+		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
 	}
 
 	//char tempBuffer[30000] = {0};
