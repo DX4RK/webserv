@@ -1,11 +1,16 @@
 #include "CGI.hpp"
 
-CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers) : _method(method), _protocol(protocol), _headers(headers) {
+//! REMOVE LEAKS
+
+CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers) {
 	this->_envpFormatted = false;
-	std::cout << "CGI contructor called" << std::endl;
+
+	this->_method = method;
+	this->_protocol = protocol;
+	this->_headers = headers;
 }
 CGI::~CGI(void) {
-	delete this->_envp;
+	//delete this->_envp;
 }
 
 void CGI::execute() {
@@ -61,7 +66,6 @@ char **CGI::formatEnvironment() {
 }
 
 void CGI::setEnvironment( std::string scriptPath, Config &config ) {
-	std::cout << "CGI env called" << std::endl;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
 	this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("QUERY_STRING", "");
