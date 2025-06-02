@@ -16,13 +16,20 @@ CGI::~CGI(void) {
 void CGI::execute() {
 	pid_t pid;
 	int status;
-	char **envp = this->_envp;
+	//char **envp = this->_envp;
 
 	int fd[2];
 	if (pipe(fd) < 0) return ;
 
-	std::string cmd = "/bin/python3";
-	char *arguments[] = {(char*)"/bin/python3", (char*)this->_env["SCRIPT_NAME"].c_str(), 0};
+	//std::string cmd = "/bin/ls";
+	//std::string script = this->_env["SCRIPT_NAME"];
+	//char *arguments[] = {(char*)cmd.c_str(), (char*)0};
+	//char *arguments[] = {(char*)cmd.c_str(), (char*)script.c_str(), (char*)0};
+
+	//std::cout << script << std::endl;
+
+	std::string cmd = "/bin/ls";
+	char *arguments[] = {(char*)"/bin/ls", (char*)"..", 0};
 
 	pid = fork();
 	if (pid < 0)
@@ -30,18 +37,21 @@ void CGI::execute() {
 	else if (pid == 0) {
 		close(fd[0]);
 		if (dup2(fd[1], STDOUT_FILENO) < 0) {
+			std::cout << "error_1" << std::endl;
 			return ;
 		}
 		close(fd[1]);
-		if (execve(cmd.c_str(), arguments, envp) < 0) {
+		if (execve(cmd.c_str(), arguments, NULL) < 0) {
+			std::cout << "error_2" << std::endl;
+			perror("execve");
 			return ;
 		}
 	} else {
 		close(fd[1]);
 		char bff[4096];
 		read(fd[0], bff, sizeof(bff) - 1);
-		close(fd[0]);
 		std::cout << bff << std::endl;
+		close(fd[0]);
 		waitpid(pid, &status, 0);
 	}
 }
