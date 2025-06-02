@@ -9,6 +9,7 @@ ListenSocket::ListenSocket(BindingSocket *mainSocket, Config *config) : _socket(
 		std::cerr << "failed to listen on socket!" << std::endl;
 		exit (EXIT_FAILURE);
 	}
+	std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " listenning on port " << BOLD << config->getServerPort() << RESET << std::endl;
 }
 
 std::string ListenSocket::getBuffer(void) const {
@@ -83,7 +84,8 @@ void ListenSocket::handler() {
 		if (status_code >= 300) { status_color = LIGHT_CYAN; }
 		if (status_code >= 400) { status_color = RED; }
 
-		std::cout << "Received " << BOLD << LIGHT_PURPLE << request.getMethod() << RESET << " code: " << status_code << " url: " << request.getUrl() << std::endl;
+		//std::cout << "Received " << BOLD << LIGHT_PURPLE << request.getMethod() << RESET << " code: " << status_code << " url: " << request.getUrl() << std::endl;
+		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " treated request " << LIGHT_ORANGE << BOLD << status_code << RESET << DIM << " " << request.getUrl() << RESET << std::endl;
 	}
 
 }
@@ -95,6 +97,13 @@ void ListenSocket::responder(void) {
 }
 
 void ListenSocket::launch() {
+	std::cout << LIGHT_BLUE << BOLD
+	<< "[webserv]" << RESET
+	<< " website is ready, url: "
+	<< GREEN << BOLD << "http://" << this->server_config->getServerName()
+	<< ":"
+	<< this->server_config->getServerPort() << RESET << std::endl << std::endl;
+
 	while (true) {
 		this->accepter();
 		this->handler();

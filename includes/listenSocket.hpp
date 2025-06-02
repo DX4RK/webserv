@@ -1,10 +1,6 @@
 #pragma once
 
-#include <map>
-#include <vector>
-#include <algorithm>
-
-#include <poll.h>
+#include "_libs.hpp"
 
 #include "request.hpp"
 #include "bindingSocket.hpp"
