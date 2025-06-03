@@ -56,16 +56,16 @@ void CGI::execute(const std::string& body) {
 	}
 }
 
-
 char **CGI::formatEnvironment() {
-	if (this->_envpFormatted) { return this->_envp; }
+	if (this->_envpFormatted) {
+		return this->_envp;
+	}
 
 	size_t envSize = this->_env.size();
 	char **envp = new char*[envSize + 1];
 
 	size_t index = 0;
-	std::map<std::string, std::string>::iterator it;
-	for (it = this->_env.begin(); it != this->_env.end(); ++it, ++index) {
+	for (std::map<std::string, std::string>::iterator it = this->_env.begin(); it != this->_env.end(); ++it, ++index) {
 		std::string data = it->first + "=" + it->second;
 		envp[index] = ft_strdup(data.c_str());
 	}
@@ -75,13 +75,17 @@ char **CGI::formatEnvironment() {
 	return envp;
 }
 
-void CGI::setEnvironment( std::string scriptPath, Config &config ) {
+void CGI::setEnvironment(std::string scriptPath, Config &config) {
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
 	this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("QUERY_STRING", "");
 
-	if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();
-	if (!this->_addEnvHeader("CONTENT_LENGTH", "Content-Length")) throw std::exception();
+	if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) {
+		this->_addEnv("CONTENT_TYPE", "");  // Ajout safe si header absent
+	}
+	if (!this->_addEnvHeader("CONTENT_LENGTH", "Content-Length")) {
+		this->_addEnv("CONTENT_LENGTH", "0"); // Ajout safe si header absent
+	}
 
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
 	this->_addEnv("SERVER_SOFTWARE", config.getServerInfo());
@@ -104,10 +108,9 @@ void CGI::_addEnv(std::string index, std::string value) {
 
 // GETTERS & SETTERS
 
-std::string CGI::_findHeader( std::string index ) {
+std::string CGI::_findHeader(std::string index) {
 	std::map<std::string, std::string>::const_iterator it = this->_headers.find(index);
 
 	if (it != this->_headers.end()) return (it->second);
 	throw std::exception();
 }
-
