@@ -3,11 +3,24 @@
 void extractData(std::string line, std::map<std::string, std::string> *map);
 void setDataFromFile(std::string path, std::map<std::string, std::string> *map);
 
+int getPortFromEnvOrDefault(int defaultPort) {
+    char *portEnv = getenv("PORT");
+    if (portEnv) {
+        try {
+            int port = std::stoi(std::string(portEnv));
+            return port;
+        } catch (...) {
+            std::cerr << "Warning: Invalid PORT env var, using default\n";
+        }
+    }
+    return defaultPort;
+}
+
 Config::Config(std::string configPath) {
 
 	(void)configPath;
 
-	this->_port = 8080;
+	this->_port = getPortFromEnvOrDefault(8080);
 	this->_serverName = "localhost";
 
 	locationConfig root_config;
@@ -20,6 +33,8 @@ Config::Config(std::string configPath) {
 	setDataFromFile(MIME_TYPES_PATH, &this->_mimes);
 	setDataFromFile(CODE_STATUS_PATH, &this->_codeStatus);
 }
+
+
 
 std::string Config::getContentType(const std::string& fileName) {
 	std::string type = getLastSub(fileName, '.');
