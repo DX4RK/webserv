@@ -14,9 +14,13 @@ Request::Request(ListenSocket &listener, Config *config) {
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
 
-	// REQUEST LINE //
-
+	// aborted crash fixed
 	std::vector<std::string> words = splitString(lines.at(0));
+	if (words.size() < 3) 
+	{
+    	this->_statusCode = 400;
+    	return;
+	}
 	std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
 
 	this->_url = url;
