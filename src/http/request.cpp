@@ -23,12 +23,42 @@ Request::Request(ListenSocket &listener, Config *config) {
 	}
 	std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
 
+	// Gestion GitHub callback login
+	if (url.find("/github/callback") == 0) {
+		this->_url = url;
+		this->_method = method;
+		this->_protocol = protocol;
+		this->_cgiEnabled = false;
+		this->_statusCode = 0;
+
+		// Headers parsing
+		size_t body_line = 0;
+		for (size_t i = 1; i < lines.size(); ++i) {
+			std::string line = lines.at(i);
+			if (line == "" || line == "\r") { body_line = i + 1; break; }
+			this->_formatHeader(line);
+		}
+
+		// Body parsing
+		size_t body_end = (lines.size() - 1);
+		if ((lines.size() - 1) > body_line) {
+			for (size_t i = body_line; i < body_end; i++) {
+				std::string jump = "\n";
+				std::string line = lines.at(i);
+
+				if (i + 1 >= body_end) { jump = ""; }
+				this->_body += trim(line, false) + jump;
+			}
+		}
+		return;
+	}
+
 	this->_url = url;
 
 	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
 
-	if(this->_url.find("/cgi-bin/")) { this->_cgiEnabled = true; }
+	if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
 
 	// HEADERS //
 

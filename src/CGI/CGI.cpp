@@ -1,7 +1,5 @@
 #include "CGI.hpp"
 
-//! REMOVE LEAKS
-
 CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers) {
 	this->_envpFormatted = false;
 
@@ -9,8 +7,13 @@ CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::st
 	this->_protocol = protocol;
 	this->_headers = headers;
 }
+
 CGI::~CGI(void) {
-	//delete this->_envp;
+	if (this->_envpFormatted && this->_envp) {
+		for (size_t i = 0; this->_envp[i]; ++i)
+			delete[] this->_envp[i];
+		delete[] this->_envp;
+	}
 }
 
 void CGI::execute(const std::string& body) {
@@ -31,6 +34,8 @@ void CGI::execute(const std::string& body) {
 
 		close(stdin_pipe[0]);
 		close(stdout_pipe[1]);
+
+		this->formatEnvironment();
 
 		char *arguments[] = {
 			(char *)"/bin/python3",
@@ -55,7 +60,6 @@ void CGI::execute(const std::string& body) {
 		waitpid(pid, NULL, 0);
 	}
 }
-
 
 char **CGI::formatEnvironment() {
 	if (this->_envpFormatted) { return this->_envp; }
@@ -102,12 +106,9 @@ void CGI::_addEnv(std::string index, std::string value) {
 	this->_env[index] = value;
 }
 
-// GETTERS & SETTERS
-
 std::string CGI::_findHeader( std::string index ) {
 	std::map<std::string, std::string>::const_iterator it = this->_headers.find(index);
 
 	if (it != this->_headers.end()) return (it->second);
 	throw std::exception();
 }
-

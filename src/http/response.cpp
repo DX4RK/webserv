@@ -2,8 +2,6 @@
 
 Response::Response(void) {}
 Response::Response(Request &request, Config *config) {
-	//struct parsing parsingResult = request.getParsing();
-
 	this->server_config = config;
 	this->_responseCode = request.getStatusCode();
 
@@ -14,15 +12,21 @@ Response::Response(Request &request, Config *config) {
 	this->addHeader("Date", getTime());
 
 	if (this->_responseCode == 0) {
-		Method methodResult = this->_processRequest(request.getMethod(), request);
-		this->_responseCode = methodResult.getReturnCode();
+		// Gestion callback GitHub login (URL spécifique)
+		if (request.getUrl().find("/github/callback") == 0) {
+			// Traiter le callback GitHub ici (exemple simplifié)
+			std::string content = "<html><body><h1>GitHub Login Callback Received</h1></body></html>";
+			this->_responseCode = 200;
+			methodContent = content;
+		} else {
+			Method methodResult = this->_processRequest(request.getMethod(), request);
+			this->_responseCode = methodResult.getReturnCode();
 
-		if (this->_responseCode == 0) { this->_responseCode = 500; return; }
+			if (this->_responseCode == 0) { this->_responseCode = 500; return; }
 
-		methodContent = methodResult.getContent();
+			methodContent = methodResult.getContent();
+		}
 	}
-
-	// RESPONSE LINE
 
 	std::string responseCode = ft_itoa(this->_responseCode);
 	std::string responseMessage = this->server_config->getStatusCode(responseCode);
@@ -47,7 +51,6 @@ Method Response::_processRequest(std::string method, Request &request) {
 	}
 
 	Method methodResult;
-	//Method methodResult(request, server_config);
 	return methodResult;
 }
 
