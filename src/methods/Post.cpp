@@ -21,6 +21,7 @@ void Post::process(Response &response, Request &request) {
 	if (request.isCgiEnabled()) {
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
 		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
+		cgi_handler.formatEnvironment();
 		cgi_handler.execute();
 	}
 	//char tempBuffer[30000] = {0};
