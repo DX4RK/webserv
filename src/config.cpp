@@ -5,7 +5,7 @@
 void extractData(std::string line, std::map<std::string, std::string> *map);
 void setDataFromFile(std::string path, std::map<std::string, std::string> *map);
 
-int getPortFromEnvOrDefault(int defaultPort) {
+/*int getPortFromEnvOrDefault(int defaultPort) {
     char *portEnv = getenv("PORT");
     if (portEnv) {
         try {
@@ -16,13 +16,13 @@ int getPortFromEnvOrDefault(int defaultPort) {
         }
     }
     return defaultPort;
-}
+}*/
 
 Config::Config(std::string configPath) {
 
 	(void)configPath;
 
-	this->_port = getPortFromEnvOrDefault(8080);
+	this->_port = 8080;
 	this->_serverName = "localhost";
 
 	locationConfig root_config;

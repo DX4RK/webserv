@@ -3,7 +3,7 @@
 NAME = webserv
 
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++11 -I. -Iincludes
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I. -Iincludes
 
 SRC_DIR = src
 OBJ_DIR = obj
