@@ -4,3 +4,4 @@
 .vscode
 obj
 webserv
+www/cgi-bin/files_uploaded_by_users/*
