@@ -1,4 +1,6 @@
 #include "config.hpp"
+#include <cstdlib>
+#include <stdexcept>
 
 void extractData(std::string line, std::map<std::string, std::string> *map);
 void setDataFromFile(std::string path, std::map<std::string, std::string> *map);
