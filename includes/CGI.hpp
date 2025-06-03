@@ -9,7 +9,7 @@ public:
 	CGI( std::string method, std::string protocol, std::map<std::string, std::string> headers );
 	~CGI( void );
 
-	void execute( void );
+	void execute( const std::string &body );
 	char **formatEnvironment( void );
 	void setEnvironment( std::string scriptPath, Config &config );
 private:
@@ -18,7 +18,6 @@ private:
 
 	char **_envp;
 	bool _envpFormatted;
-
 	std::string _method;
 	std::string _protocol;
 	std::map<std::string, std::string> _headers;

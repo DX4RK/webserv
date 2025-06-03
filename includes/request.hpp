@@ -15,6 +15,7 @@ public:
 	int getStatusCode( void ) const;
 
 	std::string getUrl( void ) const;
+	std::string getBody( void ) const;
 	std::string getMethod( void ) const;
 	std::string getProtocol( void ) const;
 

@@ -13,45 +13,49 @@ CGI::~CGI(void) {
 	//delete this->_envp;
 }
 
-void CGI::execute() {
-	pid_t pid;
-	int status;
-	char **envp = this->_envp;
+void CGI::execute(const std::string& body) {
+	int stdin_pipe[2], stdout_pipe[2];
+	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0)
+		return;
 
-	int fd[2];
-	if (pipe(fd) < 0) return ;
-
-	//std::string cmd = "/bin/ls";
-	std::string script = this->_env["SCRIPT_NAME"];
-	//char *arguments[] = {(char*)cmd.c_str(), (char*)0};
-	//char *arguments[] = {(char*)cmd.c_str(), (char*)script.c_str(), (char*)0};
-
-	//std::cout << script << std::endl;
-
-	std::string cmd = "/bin/python3";
-	char *arguments[] = {(char*)"/bin/python3", (char*)script.c_str(), 0};
-
-	pid = fork();
+	pid_t pid = fork();
 	if (pid < 0)
-		return ;
-	else if (pid == 0) {
-		close(fd[0]);
-		if (dup2(fd[1], STDOUT_FILENO) < 0) {
-			return ;
-		}
-		close(fd[1]);
-		if (execve(cmd.c_str(), arguments, envp) < 0) {
-			return ;
-		}
+		return;
+
+	if (pid == 0) {
+		close(stdin_pipe[1]);
+		close(stdout_pipe[0]);
+
+		dup2(stdin_pipe[0], STDIN_FILENO);
+		dup2(stdout_pipe[1], STDOUT_FILENO);
+
+		close(stdin_pipe[0]);
+		close(stdout_pipe[1]);
+
+		char *arguments[] = {
+			(char *)"/bin/python3",
+			(char *)this->_env["SCRIPT_NAME"].c_str(),
+			NULL
+		};
+		execve("/bin/python3", arguments, this->_envp);
+		exit(1);
 	} else {
-		close(fd[1]);
-		char bff[4096];
-		read(fd[0], bff, sizeof(bff) - 1);
-		std::cout << bff << std::endl;
-		close(fd[0]);
-		waitpid(pid, &status, 0);
+		close(stdin_pipe[0]);
+		close(stdout_pipe[1]);
+
+		write(stdin_pipe[1], body.c_str(), body.length());
+		close(stdin_pipe[1]);
+
+		char buffer[4096];
+		ssize_t n = read(stdout_pipe[0], buffer, sizeof(buffer) - 1);
+		buffer[n] = '\0';
+		std::cout << buffer << std::endl;
+
+		close(stdout_pipe[0]);
+		waitpid(pid, NULL, 0);
 	}
 }
+
 
 char **CGI::formatEnvironment() {
 	if (this->_envpFormatted) { return this->_envp; }

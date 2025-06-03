@@ -22,7 +22,7 @@ void Post::process(Response &response, Request &request) {
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
 		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
 		cgi_handler.formatEnvironment();
-		cgi_handler.execute();
+		cgi_handler.execute(request.getBody());
 	}
 	//char tempBuffer[30000] = {0};
 	//ssize_t bytesRead = recv(this., tempBuffer, 30000, 0);

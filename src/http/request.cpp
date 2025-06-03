@@ -13,7 +13,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
-	
+
 	// REQUEST LINE //
 
 	std::vector<std::string> words = splitString(lines.at(0));
@@ -48,6 +48,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 			this->_body += trim(line, false) + jump;
 		}
 	}
+
 	return;
 }
 
@@ -84,6 +85,7 @@ bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
 
 std::string Request::getMethod(void) const { return this->_method; }
 std::string Request::getUrl(void) const { return this->_url; }
+std::string Request::getBody(void) const { return this->_body; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
 
 std::map<std::string, std::string> Request::getHeaders(void) const { return this->_headers; }
