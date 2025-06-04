@@ -23,22 +23,22 @@ Get::~Get(void) {}
 //  Fonction pour récupérer les posts
 void Get::_handleGetPosts(Request &request) {
 	(void)request; // Fix warning unused parameter
-	
+
 	try {
 		std::string postData = "type=get_posts";
-		
+
 		std::map<std::string, std::string> headers;
 		headers["Content-Type"] = "application/x-www-form-urlencoded";
 		headers["Content-Length"] = ft_itoa(postData.length());
-		
+
 		CGI cgi_handler("POST", "HTTP/1.1", headers);
 		cgi_handler.setEnvironment("./www/cgi-bin/forum.py", *this->server_config);
 		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 		cgi_handler.formatEnvironment();
 		cgi_handler.execute(postData);
-		
+
 		this->_returnCode = 200;
-		
+
 	} catch (std::exception &e) {
 		this->_content = "{\"posts\": [], \"error\": \"Server error\"}"; // Fix R"" syntax
 		this->_returnCode = 500;
@@ -67,21 +67,27 @@ void Get::process(Response &response, Request &request) {
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	} else if (this->_returnCode != 0) { return; }
 
-	char tempBuffer[30000] = {0};
-	ssize_t bytesRead = read(this->_fileFd, tempBuffer, 30000);
+	char buffer[4096];
+	ssize_t bytesRead;
+	std::string fileContent;
+
+	while ((bytesRead = read(this->_fileFd, buffer, sizeof(buffer))) > 0) {
+		fileContent.append(buffer, bytesRead);
+	}
+
+	close(this->_fileFd);
 
 	if (bytesRead < 0) {
-		close(this->_fileFd);
 		this->_returnCode = 500;
 		return;
 	}
 
-	this->_content = std::string(tempBuffer, bytesRead);
-	close(this->_fileFd);
+	this->_content = fileContent;
+
 	if (this->_returnCode == 0) { this->_returnCode = 200; }
 
 	response.addHeader("Content-Type", this->server_config->getContentType(this->_filePath));
-	response.addHeader("Content-Length", ft_itoa(bytesRead));
+	response.addHeader("Content-Length", ft_itoa(this->_content.size()));
 	response.addHeader("Last-Modified", getFileModifiedTime(this->_filePath));
 }
 
