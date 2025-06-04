@@ -12,13 +12,21 @@ Response::Response(Request &request, Config *config) {
 	this->addHeader("Date", getTime());
 
 	if (this->_responseCode == 0) {
-		// Gestion callback GitHub login (URL spécifique)
-		if (request.getUrl().find("/github/callback") == 0) {
-			// Traiter le callback GitHub ici (exemple simplifié)
-			std::string content = "<html><body><h1>GitHub Login Callback Received</h1></body></html>";
-			this->_responseCode = 200;
-			methodContent = content;
-		} else {
+		// Gestion GitHub login
+		if (request.getUrl() == "/login/github") {
+			this->_responseCode = 302;
+			std::string redirectUrl = "https://github.com/login/oauth/authorize?client_id=Ov23liqR1ibSAhoNpfGM&redirect_uri=http://localhost:8080/github/callback&scope=user";
+			this->addHeader("Location", redirectUrl);
+			methodContent = "";
+		}
+		// Gestion callback GitHub
+		else if (request.getUrl().find("/github/callback") == 0) {
+			this->_handleGithubCallback(request);
+			this->_responseCode = 302;
+			this->addHeader("Location", "/");
+			methodContent = "";
+		}
+		else {
 			Method methodResult = this->_processRequest(request.getMethod(), request);
 			this->_responseCode = methodResult.getReturnCode();
 
@@ -37,6 +45,41 @@ Response::Response(Request &request, Config *config) {
 
 Response::~Response( void ) {
 	this->_response = "";
+}
+
+// Fonction pour gérer le callback GitHub
+void Response::_handleGithubCallback(Request &request) {
+	std::string url = request.getUrl();
+	std::string code = "";
+	
+	size_t codePos = url.find("code=");
+	if (codePos != std::string::npos) {
+		size_t start = codePos + 5;
+		size_t end = url.find("&", start);
+		if (end == std::string::npos) end = url.length();
+		code = url.substr(start, end - start);
+	}
+
+	if (!code.empty()) {
+		try {
+			std::string postData = "type=github&code=" + code;
+			std::map<std::string, std::string> headers;
+			headers["Content-Type"] = "application/x-www-form-urlencoded";
+			headers["Content-Length"] = ft_itoa(postData.length());
+			
+			CGI cgi_handler("POST", "HTTP/1.1", headers);
+			cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
+			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+			cgi_handler.formatEnvironment();
+			cgi_handler.execute(postData);
+
+					// todo noldiane : notification sucess login ou failed
+		// JSON {"success": true/false, "login": "username"}
+		// Si login success, ajouter un cookie de session
+		} catch (std::exception &e) {
+			// TODO NOLDIANE: Notification d'erreur general bizarre comme post.cpp
+		}
+	}
 }
 
 Method Response::_processRequest(std::string method, Request &request) {

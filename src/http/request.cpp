@@ -40,8 +40,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 		}
 
 		// Body parsing
-		size_t body_end = (lines.size() - 1);
-		if ((lines.size() - 1) > body_line) {
+		size_t body_end = lines.size(); 
+		if (lines.size() > body_line) {
 			for (size_t i = body_line; i < body_end; i++) {
 				std::string jump = "\n";
 				std::string line = lines.at(i);
@@ -72,8 +72,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	// BODY //
 
-	size_t body_end = (lines.size() - 1);
-	if ((lines.size() - 1) > body_line) {
+	size_t body_end = lines.size();
+	if (lines.size() > body_line) {
 		for (size_t i = body_line; i < body_end; i++) {
 			std::string jump = "\n";
 			std::string line = lines.at(i);

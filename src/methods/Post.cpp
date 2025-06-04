@@ -5,13 +5,53 @@ Post::Post(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->server_config = config;
 
+	//  Gestion login standard
+	if (request.getUrl() == "/login/standard") {
+		this->_handleStandardLogin(request);
+		return;
+	}
+
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
 	if (this->_handleFileUrl(request, root_page)) return;
 }
 Post::~Post(void) {}
 
+// Fonction pour login standard
+void Post::_handleStandardLogin(Request &request) {
+	try {
+		std::string body = request.getBody();
+		std::string postData = "type=standard&" + body;
+		
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "application/x-www-form-urlencoded";
+		headers["Content-Length"] = ft_itoa(postData.length());
+		
+		CGI cgi_handler("POST", "HTTP/1.1", headers);
+		cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
+		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+		cgi_handler.formatEnvironment();
+		cgi_handler.execute(postData);
+		
+		// todo noldiane : notification sucess login ou failed
+		// JSON {"success": true/false, "login": "username"}
+		// Si login success, ajouter un cookie de session
+
+
+		this->_returnCode = 302;
+	} catch (std::exception &e) {
+		// TODO NOLDIANE: Notification d'erreur jsp genre bizarre ?
+		this->_returnCode = 302;
+	}
+}
+
 void Post::process(Response &response, Request &request) {
+	// Redirection pour login standard
+	if (request.getUrl() == "/login/standard") {
+		response.addHeader("Location", "/");
+		return;
+	}
+
 	(void)response;
 	(void)server_config;
 
@@ -24,12 +64,6 @@ void Post::process(Response &response, Request &request) {
 		cgi_handler.formatEnvironment();
 		cgi_handler.execute(request.getBody());
 	}
-	//char tempBuffer[30000] = {0};
-	//ssize_t bytesRead = recv(this., tempBuffer, 30000, 0);
-	//if (bytesRead < 0) { make_error("failed to read from socket", EXIT_FAILURE); }
-
-	//tempBuffer[bytesRead] = '\0';
-	//std::string buffer = static_cast<std::string>(tempBuffer);
 
 	return;
 }
@@ -37,12 +71,6 @@ void Post::process(Response &response, Request &request) {
 bool Post::_handleFileUrl(Request &request, const std::string root) {
 	const std::string &filePath = request.getUrl();
 	std::string fullPath = root + filePath;
-	//std::map<std::string, std::string>::const_iterator it = request.getHeaders().find("Referer");
-
-	//if (it != request.getHeaders().end()) {
-	//	std::string path = extractPath(request.getHeaders()["Referer"]);
-	//	fullPath = WEB_ROOT + trim(path, false) + trim(filePath, false);
-	//}
 
 	this->_fileName = getLastSub(fullPath, '/');
 

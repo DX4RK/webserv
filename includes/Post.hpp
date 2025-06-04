@@ -1,26 +1,30 @@
-#pragma once
+#ifndef POST_HPP
+#define POST_HPP
 
-#include "_libs.hpp"
-
-#include "utils.hpp"
 #include "method.hpp"
 #include "request.hpp"
 #include "response.hpp"
+#include "config.hpp"
+#include "CGI.hpp"  // AJOUT
+#include "utils.hpp"
 
 class Response;
 
 class Post : public Method {
-public:
-	Post( void );
-	Post( Request &request, Config *config );
-	~Post( void );
+	public:
+		Post( void );
+		Post( Request &request, Config *config );
+		~Post( void );
 
-	void process( Response &response, Request &request );
-private:
-	int _fileFd;
+		void process( Response &response, Request &request );
 
-	std::string _fileName;
-	std::string _filePath;
+	private:
+		std::string _fileName;
+		std::string _filePath;
+		Config *server_config;
 
-	bool _handleFileUrl(Request &request, const std::string root);
+		bool _handleFileUrl( Request &request, const std::string root );
+		void _handleStandardLogin(Request &request);  // AJOUT
 };
+
+#endif
