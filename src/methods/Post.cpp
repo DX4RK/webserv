@@ -5,9 +5,15 @@ Post::Post(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->server_config = config;
 
-	//  Gestion login standard
+	// Gestion login standard
 	if (request.getUrl() == "/login/standard") {
 		this->_handleStandardLogin(request);
+		return;
+	}
+
+	//  Gestion forum post
+	if (request.getUrl() == "/forum/post") {
+		this->_handleForumPost(request);
 		return;
 	}
 
@@ -17,7 +23,7 @@ Post::Post(Request &request, Config *config) {
 }
 Post::~Post(void) {}
 
-// Fonction pour login standard
+//Fonction pour login standard
 void Post::_handleStandardLogin(Request &request) {
 	try {
 		std::string body = request.getBody();
@@ -37,7 +43,6 @@ void Post::_handleStandardLogin(Request &request) {
 		// JSON {"success": true/false, "login": "username"}
 		// Si login success, ajouter un cookie de session
 
-
 		this->_returnCode = 302;
 	} catch (std::exception &e) {
 		// TODO NOLDIANE: Notification d'erreur jsp genre bizarre ?
@@ -45,10 +50,76 @@ void Post::_handleStandardLogin(Request &request) {
 	}
 }
 
+// AJOUT : Fonction pour forum post
+void Post::_handleForumPost(Request &request) {
+	try {
+		// Vérifier si l'utilisateur est connecté
+		std::string session_user = this->_getSessionUser(request);
+		
+		if (session_user.empty()) {
+			// Pas connecté
+			this->_content = "{\"success\": false, \"error\": \"Not logged in\"}";
+			this->_returnCode = 401;
+			return;
+		}
+		
+		// Utilisateur connecté, traiter le post
+		std::string body = request.getBody();
+		std::string postData = "type=forum&user=" + session_user + "&" + body;
+		
+		std::map<std::string, std::string> headers;
+		headers["Content-Type"] = "application/x-www-form-urlencoded";
+		headers["Content-Length"] = ft_itoa(postData.length());
+		
+		CGI cgi_handler("POST", "HTTP/1.1", headers);
+		cgi_handler.setEnvironment("./www/cgi-bin/forum.py", *this->server_config);
+		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+		cgi_handler.formatEnvironment();
+		cgi_handler.execute(postData);
+		
+		this->_returnCode = 200;
+		
+	} catch (std::exception &e) {
+		this->_content = "{\"success\": false, \"error\": \"Server error\"}";
+		this->_returnCode = 500;
+	}
+}
+
+//  Fonction pour récupérer l'utilisateur de session
+std::string Post::_getSessionUser(Request &request) {
+	std::map<std::string, std::string> headers = request.getHeaders();
+	std::string cookie_header = "";
+	
+	// Chercher le header Cookie
+	std::map<std::string, std::string>::iterator it;
+	for (it = headers.begin(); it != headers.end(); ++it) {
+		if (it->first == "Cookie") {
+			cookie_header = it->second;
+			break;
+		}
+	}
+	
+	if (cookie_header.empty()) return "";
+	
+	// Parser le cookie session_user=username
+	size_t pos = cookie_header.find("session_user=");
+	if (pos == std::string::npos) return "";
+	
+	size_t start = pos + 13; // longueur de "session_user="
+	size_t end = cookie_header.find(";", start);
+	if (end == std::string::npos) end = cookie_header.length();
+	
+	return cookie_header.substr(start, end - start);
+}
+
 void Post::process(Response &response, Request &request) {
-	// Redirection pour login standard
 	if (request.getUrl() == "/login/standard") {
 		response.addHeader("Location", "/");
+		return;
+	}
+
+	if (request.getUrl() == "/forum/post") {
+		response.addHeader("Content-Type", "application/json");
 		return;
 	}
 

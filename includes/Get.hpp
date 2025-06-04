@@ -5,6 +5,7 @@
 #include "utils.hpp"
 #include "method.hpp"
 #include "request.hpp"
+#include "CGI.hpp"
 
 class Response;
 class Request;
@@ -22,6 +23,7 @@ private:
 	std::string _filePath;
 
 	bool _handleFileUrl(Request &request, const std::string root);
+	void _handleGetPosts(Request &request);
 
 
 	Get( void );
