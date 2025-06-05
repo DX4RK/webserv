@@ -1,4 +1,5 @@
 #include "response.hpp"
+#include "Put.hpp"
 
 Response::Response(void) {}
 Response::Response(Request &request, Config *config) {
@@ -91,6 +92,10 @@ Method Response::_processRequest(std::string method, Request &request) {
 		Post methodResult(request, server_config);
 		methodResult.process(*this, request);
 		return methodResult;
+	} else if (method.compare("PUT") == 0) {
+    Put methodResult(request, server_config);
+    methodResult.process(*this, request);
+    return methodResult;
 	}
 
 	Method methodResult;
