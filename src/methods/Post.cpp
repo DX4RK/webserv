@@ -5,15 +5,8 @@ Post::Post(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->server_config = config;
 
-	// Gestion login standard
-	if (request.getUrl() == "/login/standard") {
-		this->_handleStandardLogin(request);
-		return;
-	}
-
-	//  Gestion forum post
-	if (request.getUrl() == "/forum/post") {
-		this->_handleForumPost(request);
+	if (this->_isCgiRequest(request)) {
+		this->_handleCgiRequest(request);
 		return;
 	}
 
@@ -23,66 +16,86 @@ Post::Post(Request &request, Config *config) {
 }
 Post::~Post(void) {}
 
-//Fonction pour login standard
-void Post::_handleStandardLogin(Request &request) {
+void Post::_handleCgiRequest(Request &request) {
 	try {
-		std::string body = request.getBody();
-		std::string postData = "type=standard&" + body;
-		
-		std::map<std::string, std::string> headers;
-		headers["Content-Type"] = "application/x-www-form-urlencoded";
-		headers["Content-Length"] = ft_itoa(postData.length());
-		
-		CGI cgi_handler("POST", "HTTP/1.1", headers);
-		cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
-		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-		cgi_handler.formatEnvironment();
-		cgi_handler.execute(postData);
-		
-		// todo noldiane : notification sucess login ou failed
-		// JSON {"success": true/false, "login": "username"}
-		// Si login success, ajouter un cookie de session
+		std::string url = request.getUrl();
+		std::string scriptPath = "";
+		std::string postData = "";
 
-		this->_returnCode = 302;
+		if (url == "/login/standard") {
+			scriptPath = "./www/cgi-bin/login.py";
+			postData = "type=standard&" + request.getBody();
+		}
+		else if (url == "/forum/post") {
+			std::string session_user = this->_getSessionUser(request);
+			
+			if (session_user.empty()) {
+				this->_content = "{\"success\": false, \"error\": \"Not logged in\"}";
+				this->_returnCode = 401;
+				return;
+			}
+			
+			scriptPath = "./www/cgi-bin/forum.py";
+			postData = "type=forum&user=" + session_user + "&" + request.getBody();
+		}
+		else if (url.find("/cgi-bin/") == 0) {
+			scriptPath = "./www" + url;
+			postData = request.getBody();
+		}
+		else {
+			this->_returnCode = 404;
+			return;
+		}
+
+		if (!fileExists(scriptPath)) {
+			this->_returnCode = 404;
+			return;
+		}
+
+		if (!hasReadPermission(scriptPath)) {
+			this->_returnCode = 403;
+			return;
+		}
+
+		this->_executeCgiScript(request, scriptPath, postData);
+
 	} catch (std::exception &e) {
-		// TODO NOLDIANE: Notification d'erreur jsp genre bizarre ?
-		this->_returnCode = 302;
+		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
+		this->_returnCode = 500;
 	}
 }
 
-// AJOUT : Fonction pour forum post
-void Post::_handleForumPost(Request &request) {
-	try {
-		// Vérifier si l'utilisateur est connecté
-		std::string session_user = this->_getSessionUser(request);
-		
-		if (session_user.empty()) {
-			// Pas connecté
-			this->_content = "{\"success\": false, \"error\": \"Not logged in\"}";
-			this->_returnCode = 401;
-			return;
-		}
-		
-		// Utilisateur connecté, traiter le post
-		std::string body = request.getBody();
-		std::string postData = "type=forum&user=" + session_user + "&" + body;
-		
-		std::map<std::string, std::string> headers;
-		headers["Content-Type"] = "application/x-www-form-urlencoded";
-		headers["Content-Length"] = ft_itoa(postData.length());
-		
-		CGI cgi_handler("POST", "HTTP/1.1", headers);
-		cgi_handler.setEnvironment("./www/cgi-bin/forum.py", *this->server_config);
-		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-		cgi_handler.formatEnvironment();
-		cgi_handler.execute(postData);
-		
+void Post::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
+	std::map<std::string, std::string> headers;
+	headers["Content-Type"] = "application/x-www-form-urlencoded";
+	headers["Content-Length"] = ft_itoa(postData.length());
+
+	CGI cgi_handler("POST", request.getProtocol(), headers);
+	cgi_handler.setEnvironment(scriptPath, *this->server_config);
+	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+	cgi_handler.formatEnvironment();
+	this->_content = cgi_handler.execute(postData);
+
+	std::string url = request.getUrl();
+	if (url == "/login/standard") {
+		this->_returnCode = 302;
+	} else {
 		this->_returnCode = 200;
-		
-	} catch (std::exception &e) {
-		this->_content = "{\"success\": false, \"error\": \"Server error\"}";
-		this->_returnCode = 500;
 	}
+}
+
+bool Post::_isCgiRequest(Request &request) {
+	std::string url = request.getUrl();
+	
+	if (url == "/login/standard" || url == "/forum/post") {
+		return true;
+	}
+	
+	if (url.find("/cgi-bin/") == 0) {
+		return true;
+	}
+	
+	return false;
 }
 
 //  Fonction pour récupérer l'utilisateur de session
@@ -113,18 +126,27 @@ std::string Post::_getSessionUser(Request &request) {
 }
 
 void Post::process(Response &response, Request &request) {
-	if (request.getUrl() == "/login/standard") {
-		response.addHeader("Location", "/");
+	if (this->_isCgiRequest(request)) {
+		std::string url = request.getUrl();
+		
+		if (url == "/login/standard") {
+			response.addHeader("Location", "/");
+			return;
+		}
+		
+		if (url == "/forum/post") {
+			response.addHeader("Content-Type", "application/json");
+			return;
+		}
+		
+		if (url.find(".py") != std::string::npos) {
+			response.addHeader("Content-Type", "application/json");
+		} else {
+			response.addHeader("Content-Type", "text/html");
+		}
+		
 		return;
 	}
-
-	if (request.getUrl() == "/forum/post") {
-		response.addHeader("Content-Type", "application/json");
-		return;
-	}
-
-	(void)response;
-	(void)server_config;
 
 	if (this->_returnCode != 0) return;
 	if (this->_returnCode == 0) { this->_returnCode = 200; }
@@ -133,7 +155,7 @@ void Post::process(Response &response, Request &request) {
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
 		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
 		cgi_handler.formatEnvironment();
-		cgi_handler.execute(request.getBody());
+		this->_content = cgi_handler.execute(request.getBody());
 	}
 
 	return;

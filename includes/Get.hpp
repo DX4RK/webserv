@@ -22,9 +22,11 @@ private:
 	std::string _fileName;
 	std::string _filePath;
 
+	bool _isCgiRequest(Request &request);
+	void _handleCgiRequest(Request &request);
+	void _executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData);
+	
 	bool _handleFileUrl(Request &request, const std::string root);
-	void _handleGetPosts(Request &request);
-
 
 	Get( void );
 };

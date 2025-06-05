@@ -5,9 +5,8 @@ Get::Get(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->server_config = config;
 
-	//  Gestion récupération posts forum
-	if (request.getUrl() == "/forum/posts") {
-		this->_handleGetPosts(request);
+	if (this->_isCgiRequest(request)) {
+		this->_handleCgiRequest(request);
 		return;
 	}
 
@@ -20,41 +19,108 @@ Get::Get(Request &request, Config *config) {
 }
 Get::~Get(void) {}
 
-//  Fonction pour récupérer les posts
-void Get::_handleGetPosts(Request &request) {
-	(void)request; // Fix warning unused parameter
-
+void Get::_handleCgiRequest(Request &request) {
 	try {
-		std::string postData = "type=get_posts";
+		std::string url = request.getUrl();
+		std::string scriptPath = "";
+		std::string postData = "";
 
-		std::map<std::string, std::string> headers;
-		headers["Content-Type"] = "application/x-www-form-urlencoded";
-		headers["Content-Length"] = ft_itoa(postData.length());
+		if (url == "/forum/posts") {
+			scriptPath = "./www/cgi-bin/forum.py";
+			postData = "type=get_posts";
+		}
+		else if (url == "/stats") {
+			scriptPath = "./www/cgi-bin/stats.sh";
+			postData = "";
+		}
+		else if (url.find("/cgi-bin/") == 0) {
 
-		CGI cgi_handler("POST", "HTTP/1.1", headers);
-		cgi_handler.setEnvironment("./www/cgi-bin/forum.py", *this->server_config);
-		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-		cgi_handler.formatEnvironment();
-		cgi_handler.execute(postData);
+			scriptPath = "./www" + url;
+			postData = "";
+		}
+		else {
+			this->_returnCode = 404;
+			return;
+		}
 
-		this->_returnCode = 200;
+		if (!fileExists(scriptPath)) {
+			this->_returnCode = 404;
+			return;
+		}
+
+		if (!hasReadPermission(scriptPath)) {
+			this->_returnCode = 403;
+			return;
+		}
+
+		this->_executeCgiScript(request, scriptPath, postData);
 
 	} catch (std::exception &e) {
-		this->_content = "{\"posts\": [], \"error\": \"Server error\"}"; // Fix R"" syntax
+		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
 		this->_returnCode = 500;
 	}
+}
+
+void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
+	std::map<std::string, std::string> headers;
+	
+	if (scriptPath.find(".py") != std::string::npos || 
+		scriptPath.find(".sh") != std::string::npos) {
+		headers["Content-Type"] = "application/json";
+	} else {
+		headers["Content-Type"] = "text/html";
+	}
+	
+	headers["Content-Length"] = ft_itoa(postData.length());
+
+	std::string method = postData.empty() ? request.getMethod() : "POST";
+
+	CGI cgi_handler(method, request.getProtocol(), headers);
+	cgi_handler.setEnvironment(scriptPath, *this->server_config);
+	
+	if (!postData.empty()) {
+		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+	}
+	
+	cgi_handler.formatEnvironment();
+	this->_content = cgi_handler.execute(postData);
+
+	this->_returnCode = 200;
+}
+
+bool Get::_isCgiRequest(Request &request) {
+	std::string url = request.getUrl();
+	
+	if (url == "/forum/posts" || url == "/stats") {
+		return true;
+	}
+	
+	if (url.find("/cgi-bin/") == 0) {
+		return true;
+	}
+	
+	return false;
 }
 
 void Get::process(Response &response, Request &request) {
 	(void)request;
 
-	//  Réponse JSON pour forum posts
-	if (request.getUrl() == "/forum/posts") {
-		response.addHeader("Content-Type", "application/json");
+	if (this->_isCgiRequest(request)) {
+		std::string url = request.getUrl();
+		
+		if (url == "/forum/posts" || url == "/stats" || url.find(".py") != std::string::npos) {
+			response.addHeader("Content-Type", "application/json");
+		} else {
+			response.addHeader("Content-Type", "text/html");
+		}
+		
+		if (url == "/stats") {
+			response.addHeader("Cache-Control", "no-cache");
+		}
+		
 		return;
 	}
 
-	// Si c'est une page générée, on utilise le contenu déjà préparé
 	if (!this->_content.empty() && this->_returnCode == 200) {
 		response.addHeader("Content-Type", "text/html");
 		response.addHeader("Content-Length", ft_itoa(this->_content.length()));
@@ -108,9 +174,8 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 		return (false);
 	}
 
-	// Check if it's a directory
 	if (isDirectory(fullPath)) {
-		fullPath += "/index.html"; // Try to resolve to index.html
+		fullPath += "/index.html";
 		this->_fileName = "index";
 		if (!fileExists(fullPath)) {
 			this->_returnCode = 403;
@@ -118,7 +183,6 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 		}
 	}
 
-	// Check read permissions
 	if (!hasReadPermission(fullPath)) {
 		this->_returnCode = 403;
 		return (false);

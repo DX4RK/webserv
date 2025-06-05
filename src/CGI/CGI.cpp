@@ -2,6 +2,7 @@
 
 CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers) {
 	this->_envpFormatted = false;
+	this->_output = ""; // la sortie sera stockée ici
 
 	this->_method = method;
 	this->_protocol = protocol;
@@ -16,14 +17,18 @@ CGI::~CGI(void) {
 	}
 }
 
-void CGI::execute(const std::string& body) {
+std::string CGI::execute(const std::string& body) {
 	int stdin_pipe[2], stdout_pipe[2];
-	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0)
-		return;
+	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0) {
+		this->_output = "{\"success\": false, \"error\": \"Pipe creation failed\"}";
+		return this->_output;
+	}
 
 	pid_t pid = fork();
-	if (pid < 0)
-		return;
+	if (pid < 0) {
+		this->_output = "{\"success\": false, \"error\": \"Fork failed\"}";
+		return this->_output;
+	}
 
 	if (pid == 0) {
 		close(stdin_pipe[1]);
@@ -37,28 +42,55 @@ void CGI::execute(const std::string& body) {
 
 		this->formatEnvironment();
 
-		char *arguments[] = {
-			(char *)"/bin/python3",
-			(char *)this->_env["SCRIPT_NAME"].c_str(),
-			NULL
-		};
-		execve("/bin/python3", arguments, this->_envp);
+		std::string scriptPath = this->_env["SCRIPT_NAME"];
+		char *arguments[3];
+		
+		if (scriptPath.find(".py") != std::string::npos) {
+			arguments[0] = (char *)"/bin/python3";
+			arguments[1] = (char *)scriptPath.c_str();
+			arguments[2] = NULL;
+			execve("/bin/python3", arguments, this->_envp);
+		}
+		else if (scriptPath.find(".sh") != std::string::npos) {
+			arguments[0] = (char *)"/bin/bash";
+			arguments[1] = (char *)scriptPath.c_str();
+			arguments[2] = NULL;
+			execve("/bin/bash", arguments, this->_envp);
+		}
+		else {
+			arguments[0] = (char *)"/bin/python3";
+			arguments[1] = (char *)scriptPath.c_str();
+			arguments[2] = NULL;
+			execve("/bin/python3", arguments, this->_envp);
+		}
 		exit(1);
 	} else {
 		close(stdin_pipe[0]);
 		close(stdout_pipe[1]);
 
-		write(stdin_pipe[1], body.c_str(), body.length());
+		if (!body.empty()) {
+			write(stdin_pipe[1], body.c_str(), body.length());
+		}
 		close(stdin_pipe[1]);
 
 		char buffer[4096];
-		ssize_t n = read(stdout_pipe[0], buffer, sizeof(buffer) - 1);
-		buffer[n] = '\0';
-		std::cout << buffer << std::endl;
+		ssize_t bytesRead;
+		this->_output = "";
+		
+		while ((bytesRead = read(stdout_pipe[0], buffer, sizeof(buffer) - 1)) > 0) {
+			buffer[bytesRead] = '\0';
+			this->_output += buffer;
+		}
 
 		close(stdout_pipe[0]);
 		waitpid(pid, NULL, 0);
 	}
+	
+	return this->_output;
+}
+
+std::string CGI::getOutput() const {
+	return this->_output;
 }
 
 char **CGI::formatEnvironment() {

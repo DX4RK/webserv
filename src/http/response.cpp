@@ -71,11 +71,11 @@ void Response::_handleGithubCallback(Request &request) {
 			cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
 			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 			cgi_handler.formatEnvironment();
-			cgi_handler.execute(postData);
+			std::string cgi_output = cgi_handler.execute(postData);  // Capturer la sortie
 
-					// todo noldiane : notification sucess login ou failed
-		// JSON {"success": true/false, "login": "username"}
-		// Si login success, ajouter un cookie de session
+			// todo noldiane : notification sucess login ou failed
+			// JSON {"success": true/false, "login": "username"}
+			// Si login success, ajouter un cookie de session
 		} catch (std::exception &e) {
 			// TODO NOLDIANE: Notification d'erreur general bizarre comme post.cpp
 		}
