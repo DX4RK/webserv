@@ -11,7 +11,6 @@
 #define CODE_STATUS_PATH "./config/mandatory/code.status"
 
 #define WEB_ROOT "./www"
-#define NOT_FOUND_PAGE "./src/error_pages/404.html"
 
 struct cgi_config {
 	int timeout;
