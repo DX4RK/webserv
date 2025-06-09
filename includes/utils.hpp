@@ -26,6 +26,15 @@ std::string ft_itoa(T num) {
 	return ss.str();
 }
 
+typedef struct path_parsing {
+	bool exist;
+	bool can_read;
+	bool can_write;
+	bool can_exec;
+
+	bool full_perms;
+} T_PATH_PARSING;
+
 int skip_space(std::string str);
 
 std::string getTime(void);
@@ -49,3 +58,5 @@ bool isDirectory(const std::string &path);
 bool hasReadPermission(const std::string &filePath);
 bool methodValid(std::string method);
 bool protocolValid(std::string protocol);
+
+T_PATH_PARSING parse_path(std::string path);

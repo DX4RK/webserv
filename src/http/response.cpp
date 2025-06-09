@@ -52,7 +52,7 @@ Response::~Response( void ) {
 void Response::_handleGithubCallback(Request &request) {
 	std::string url = request.getUrl();
 	std::string code = "";
-	
+
 	size_t codePos = url.find("code=");
 	if (codePos != std::string::npos) {
 		size_t start = codePos + 5;
@@ -67,7 +67,7 @@ void Response::_handleGithubCallback(Request &request) {
 			std::map<std::string, std::string> headers;
 			headers["Content-Type"] = "application/x-www-form-urlencoded";
 			headers["Content-Length"] = ft_itoa(postData.length());
-			
+
 			CGI cgi_handler("POST", "HTTP/1.1", headers);
 			cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
 			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
@@ -93,9 +93,13 @@ Method Response::_processRequest(std::string method, Request &request) {
 		methodResult.process(*this, request);
 		return methodResult;
 	} else if (method.compare("PUT") == 0) {
-    Put methodResult(request, server_config);
-    methodResult.process(*this, request);
-    return methodResult;
+		Put methodResult(request, server_config);
+		methodResult.process(*this, request);
+		return methodResult;
+	} else if (method.compare("DELETE") == 0) {
+		Delete methodResult(request, server_config);
+		methodResult.process(*this, request);
+		return methodResult;
 	}
 
 	Method methodResult;

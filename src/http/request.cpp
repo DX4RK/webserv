@@ -16,10 +16,12 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	// aborted crash fixed
 	std::vector<std::string> words = splitString(lines.at(0));
-	if (words.size() < 3) 
+
+	std::cout << lines[0] << std::endl;
+	if (words.size() < 3)
 	{
-    	this->_statusCode = 400;
-    	return;
+		this->_statusCode = 400;
+		return;
 	}
 	std::string method = words.at(0), url = words.at(1), protocol = words.at(2);
 
@@ -40,7 +42,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 		}
 
 		// Body parsing
-		size_t body_end = lines.size(); 
+		size_t body_end = lines.size();
 		if (lines.size() > body_line) {
 			for (size_t i = body_line; i < body_end; i++) {
 				std::string jump = "\n";
@@ -55,7 +57,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	this->_url = url;
 
-	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
+	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; std::cout << "heee" << std::endl; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
 
 	if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }

@@ -5,6 +5,7 @@
 #include "request.hpp"
 #include "method.hpp"
 #include "Get.hpp"
+#include "Delete.hpp"
 #include "Post.hpp"
 #include "utils.hpp"
 #include "CGI.hpp"  // AJOUT

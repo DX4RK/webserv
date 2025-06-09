@@ -57,7 +57,10 @@ bool hasReadPermission(const std::string &filePath) {
 }
 
 bool methodValid(std::string method) {
-	std::string methods[3] = { "GET", "POST", "PUT" };
+	std::string methods[4] = { "GET", "POST", "PUT", "DELETE" };
+	if (true) {
+		return (true);
+	}
 	for (size_t i = 0; i < methods->length(); i++) {
 		if (methods[i] == method) { return true; }
 	}
@@ -212,4 +215,26 @@ char	*ft_strdup(const char *str)
 	}
 	ptr[i] = '\0';
 	return (ptr);
+}
+
+bool intToBool(int i) {
+	if (i >= 0)
+		return (true);
+	return (false);
+}
+
+struct path_parsing parse_path(std::string path) {
+	const char* path_name = path.c_str();
+	T_PATH_PARSING result;
+
+	result.exist = intToBool(access(path_name, F_OK));
+	result.can_read = intToBool(access(path_name, R_OK));
+	result.can_write = intToBool(access(path_name, W_OK));
+	result.can_exec = intToBool(access(path_name, X_OK));
+	std::cout << result.exist << std::endl;
+	result.full_perms = result.exist != false \
+		&& result.can_read != false \
+		&& result.can_write != false \
+		&& result.can_exec != false;
+	return (result);
 }
