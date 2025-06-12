@@ -6,7 +6,7 @@ int main(void) {
 
 	//initMimes();
 
-	Config *config = new Config("test");
+	Config *config = new Config("./config/default.conf");
 	BindingSocket main_socket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config);
 	ListenSocket listener(&main_socket, config);
 
