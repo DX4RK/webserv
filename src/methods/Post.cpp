@@ -70,7 +70,7 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	headers["Content-Type"] = "application/x-www-form-urlencoded";
 	headers["Content-Length"] = ft_itoa(postData.length());
 
-	CGI cgi_handler("POST", request.getProtocol(), headers);
+	CGI cgi_handler("POST", request.getProtocol(), headers, 8080);
 	cgi_handler.setEnvironment(scriptPath, *this->server_config);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 	cgi_handler.formatEnvironment();
@@ -152,7 +152,7 @@ void Post::process(Response &response, Request &request) {
 	if (this->_returnCode == 0) { this->_returnCode = 200; }
 
 	if (request.isCgiEnabled()) {
-		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders());
+		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
 		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
 		cgi_handler.formatEnvironment();
 		this->_content = cgi_handler.execute(request.getBody());

@@ -10,7 +10,7 @@
 
 class CGI {
 	public:
-		CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers);
+		CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers, int serverPort);
 		~CGI(void);
 
 		std::string execute(const std::string& body);  // Maintenant retourne std::string
@@ -25,6 +25,7 @@ class CGI {
 		std::string _output;  // AJOUT : stockage de la sortie
 		std::map<std::string, std::string> _headers;
 		std::map<std::string, std::string> _env;
+		int _serverPort;  // AJOUT : port du serveur
 		
 		char **_envp;
 		bool _envpFormatted;

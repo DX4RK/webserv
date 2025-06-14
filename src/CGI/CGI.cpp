@@ -1,12 +1,13 @@
 #include "CGI.hpp"
 
-CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers) {
+CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers, int serverPort) {
 	this->_envpFormatted = false;
-	this->_output = ""; // la sortie sera stockée ici
+	this->_output = "";
 
 	this->_method = method;
 	this->_protocol = protocol;
 	this->_headers = headers;
+	this->_serverPort = serverPort;
 }
 
 CGI::~CGI(void) {
@@ -123,7 +124,7 @@ void CGI::setEnvironment( std::string scriptPath, Config &config ) {
 	this->_addEnv("SERVER_SOFTWARE", config.getServerInfo());
 	this->_addEnv("GATEWAY_INTERFACE", "CGI/1.1");
 	this->_addEnv("SERVER_NAME", config.getServerName());
-	this->_addEnv("SERVER_PORT", ft_itoa(config.getServerPort()));
+	this->_addEnv("SERVER_PORT", ft_itoa(this->_serverPort));
 }
 
 bool CGI::_addEnvHeader(std::string index, std::string headerIndex) {

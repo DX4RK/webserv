@@ -27,26 +27,28 @@ public:
 	Config(std::string configPath);
 
 	// Getters de base
-	int getServerPort(void) const;
+	std::vector<int> getServerPorts(void) const;
+	int getTimeout(void) const;
 	std::string getServerInfo(void) const;
 	std::string getServerName(void) const;
 	std::string getLocationRoot(std::string path);
 	std::string getStatusCode(const std::string& code);
 	std::string getContentType(const std::string& fileName);
 	
-	// CGI methods (simplifiées)
+	// CGI methods (dynamiques basées sur la configuration)
 	bool isCgiPath(const std::string& path) const;
 	std::string getCgiScriptPath(const std::string& path) const;
-	std::string getCgiParams(const std::string& path) const;
+	locationConfig* findLocationForPath(const std::string& path) const;
 
 private:
-	int _port;
+	std::vector<int> _ports;
 	std::string _serverName;
+	int _timeout;
 	std::map<std::string, std::string> _mimes;
 	std::map<std::string, std::string> _codeStatus;
 	std::map<std::string, location_config> _locations;
-	// Méthodes de parsing (simplifiées)
 	void _parseConfigFile(const std::string& configPath);
+	void _parseServerBlock(const std::string& serverBlock);
 	void _parseLocation(const std::string& locationLine, std::istringstream& iss);
 	std::string trim(const std::string& str);
 	Config();

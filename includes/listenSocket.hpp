@@ -11,7 +11,7 @@
 class ListenSocket {
 public:
 	~ListenSocket( void );
-	ListenSocket( BindingSocket *mainSocket, Config *config );
+	ListenSocket( std::vector<BindingSocket*> bindingSockets, Config *config );
 
 	void launch( void );
 	std::string getBuffer( void ) const;
@@ -24,7 +24,7 @@ private:
 	std::vector<pollfd> _pollfds;
 	std::map<int, std::string> _clientBuffers;
 
-	BindingSocket *_socket;
+	std::vector<BindingSocket*> _sockets;
 	Config *server_config;
 
 	void accepter( void );

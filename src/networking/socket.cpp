@@ -1,17 +1,24 @@
 #include "socket.hpp"
 
 Socket::Socket(void) {}
-Socket::Socket(int domain, int type, int protocol, u_long interface, Config *config) {
+
+Socket::Socket(int domain, int type, int protocol, u_long interface, Config *config, int port) {
 	this->server_config = config;
 
 	adress.sin_family = domain;
-	adress.sin_port = htons(this->server_config->getServerPort());
+	adress.sin_port = htons(port);
 	adress.sin_addr.s_addr = htonl(interface);
 
 	this->_sock = socket(domain, type, protocol);
 
 	if (this->_sock < 0) {
-		std::cerr << "failed to create sointerfacecket." << std::endl;
+		std::cerr << "failed to create socket for port " << port << "." << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	int option = 1;
+	if (setsockopt(this->_sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0) {
+		std::cerr << "failed to set socket options for port " << port << "." << std::endl;
 		exit(EXIT_FAILURE);
 	}
 }

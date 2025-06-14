@@ -41,7 +41,15 @@ Response::Response(Request &request, Config *config) {
 	std::string responseMessage = this->server_config->getStatusCode(responseCode);
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
-	this->_response += this->_headers + "\n" + methodContent;
+	
+	// Vérifier si c'est une réponse CGI (contient déjà des headers)
+	if (methodContent.find("Content-Type:") == 0 || methodContent.find("Content-type:") == 0) {
+		// Réponse CGI - ajouter seulement les headers du serveur et le contenu CGI
+		this->_response += this->_headers + methodContent;
+	} else {
+		// Réponse normale - ajouter headers + ligne vide + contenu
+		this->_response += this->_headers + "\n" + methodContent;
+	}
 }
 
 Response::~Response( void ) {
@@ -68,7 +76,7 @@ void Response::_handleGithubCallback(Request &request) {
 			headers["Content-Type"] = "application/x-www-form-urlencoded";
 			headers["Content-Length"] = ft_itoa(postData.length());
 
-			CGI cgi_handler("POST", "HTTP/1.1", headers);
+			CGI cgi_handler("POST", "HTTP/1.1", headers, 8080);
 			cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
 			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 			cgi_handler.formatEnvironment();

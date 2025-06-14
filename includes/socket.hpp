@@ -8,8 +8,8 @@
 class Socket
 {
 public:
-	Socket( int domain, int type, int protocol, u_long interface, Config *config );
-	~Socket( void );
+	Socket( int domain, int type, int protocol, u_long interface, Config *config, int port );
+	virtual ~Socket( void );
 
 	int get_sock( void ) const;
 	struct sockaddr_in get_address( void ) const;

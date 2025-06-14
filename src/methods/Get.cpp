@@ -22,23 +22,10 @@ Get::~Get(void) {}
 void Get::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
-		std::string scriptPath = "";
-		std::string postData = "";
 
-		if (url == "/forum/posts") {
-			scriptPath = "./www/cgi-bin/forum.py";
-			postData = "type=get_posts";
-		}
-		else if (url == "/stats") {
-			scriptPath = "./www/cgi-bin/stats.sh";
-			postData = "";
-		}
-		else if (url.find("/cgi-bin/") == 0) {
-
-			scriptPath = "./www" + url;
-			postData = "";
-		}
-		else {
+		std::string scriptPath = this->server_config->getCgiScriptPath(url);
+		
+		if (scriptPath.empty()) {
 			this->_returnCode = 404;
 			return;
 		}
@@ -53,6 +40,8 @@ void Get::_handleCgiRequest(Request &request) {
 			return;
 		}
 
+		std::string postData = "";
+
 		this->_executeCgiScript(request, scriptPath, postData);
 
 	} catch (std::exception &e) {
@@ -63,19 +52,14 @@ void Get::_handleCgiRequest(Request &request) {
 
 void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
 	std::map<std::string, std::string> headers;
-	
-	if (scriptPath.find(".py") != std::string::npos || 
-		scriptPath.find(".sh") != std::string::npos) {
-		headers["Content-Type"] = "application/json";
-	} else {
-		headers["Content-Type"] = "text/html";
-	}
+
+	headers["Content-Type"] = this->_getContentTypeFromScript(scriptPath);
 	
 	headers["Content-Length"] = ft_itoa(postData.length());
 
 	std::string method = postData.empty() ? request.getMethod() : "POST";
 
-	CGI cgi_handler(method, request.getProtocol(), headers);
+	CGI cgi_handler(method, request.getProtocol(), headers, 8080);
 	cgi_handler.setEnvironment(scriptPath, *this->server_config);
 	
 	if (!postData.empty()) {
@@ -90,16 +74,8 @@ void Get::_executeCgiScript(Request &request, const std::string &scriptPath, con
 
 bool Get::_isCgiRequest(Request &request) {
 	std::string url = request.getUrl();
-	
-	if (url == "/forum/posts" || url == "/stats") {
-		return true;
-	}
-	
-	if (url.find("/cgi-bin/") == 0) {
-		return true;
-	}
-	
-	return false;
+
+	return this->server_config->isCgiPath(url);
 }
 
 void Get::process(Response &response, Request &request) {
@@ -107,17 +83,8 @@ void Get::process(Response &response, Request &request) {
 
 	if (this->_isCgiRequest(request)) {
 		std::string url = request.getUrl();
-		
-		if (url == "/forum/posts" || url == "/stats" || url.find(".py") != std::string::npos) {
-			response.addHeader("Content-Type", "application/json");
-		} else {
-			response.addHeader("Content-Type", "text/html");
-		}
-		
-		if (url == "/stats") {
-			response.addHeader("Cache-Control", "no-cache");
-		}
-		
+		std::string scriptPath = this->server_config->getCgiScriptPath(url);
+		response.addHeader("Content-Type", this->_getContentTypeFromScript(scriptPath));
 		return;
 	}
 
@@ -190,4 +157,15 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 
 	this->_filePath = fullPath;
 	return (true);
+}
+
+std::string Get::_getContentTypeFromScript(const std::string& scriptPath) const {
+	size_t dotPos = scriptPath.find_last_of('.');
+	if (dotPos != std::string::npos) {
+		std::string extension = scriptPath.substr(dotPos);
+		if (extension == ".py" || extension == ".sh") {
+			return "application/json";
+		} 
+	}
+	return "text/html";
 }

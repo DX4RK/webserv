@@ -4,8 +4,9 @@ void extractData(std::string line, std::map<std::string, std::string> *map);
 void setDataFromFile(std::string path, std::map<std::string, std::string> *map);
 
 Config::Config(std::string configPath) {
-	this->_port = 8080;
+	this->_ports.push_back(8080);
 	this->_serverName = "localhost";
+	this->_timeout = 60;
 
 	locationConfig root_config;
 	root_config.path = "/";
@@ -40,13 +41,16 @@ std::string Config::getContentType(const std::string& fileName) {
 std::string Config::getStatusCode(const std::string& code) {
 	std::map<std::string, std::string>::iterator it = this->_codeStatus.find(code);
 	if (it != this->_codeStatus.end()) {
-		return it->second;
-	}
+		return it->second;	}
 	return "???";
 }
 
-int Config::getServerPort(void) const { 
-	return this->_port; 
+std::vector<int> Config::getServerPorts(void) const { 
+	return this->_ports; 
+}
+
+int Config::getTimeout(void) const { 
+	return this->_timeout; 
 }
 
 std::string Config::getLocationRoot(std::string path) {
@@ -68,83 +72,40 @@ std::string Config::getServerName() const {
 	return this->_serverName; 
 }
 
-// Méthodes CGI simples pour les routes hardcodées existantes
-bool Config::isCgiPath(const std::string& path) const {
-	return (path.find("/forum") == 0 || path.find("/stats") == 0 || path.find("/cgi-bin/") == 0);
-}
-
-std::string Config::getCgiScriptPath(const std::string& path) const {
-	if (path.find("/forum") == 0) {
-		return "./www/cgi-bin/forum.py";
-	}
-	if (path.find("/stats") == 0) {
-		return "./www/cgi-bin/stats.sh";
-	}
-	if (path.find("/cgi-bin/") == 0) {
-		return "./www" + path;
-	}
-	return "";
-}
-
-std::string Config::getCgiParams(const std::string& path) const {
-	if (path == "/forum/posts") {
-		return "type=get_posts";
-	}
-	return "";
-}
-
 void Config::_parseConfigFile(const std::string& configPath) {
-	int fd = open(configPath.c_str(), O_RDONLY);
-	if (fd < 0) { return; }
+    int fd = open(configPath.c_str(), O_RDONLY);
+    if (fd < 0) { return; }
 
-	char buffer[8192];
-	std::string content;
-	ssize_t bytesRead;
-	
-	while ((bytesRead = read(fd, buffer, sizeof(buffer) - 1)) > 0) {
-		buffer[bytesRead] = '\0';
-		content += buffer;
-	}
-	close(fd);
+    char buffer[8192];
+    std::string content;
+    ssize_t bytesRead;
+    
+    while ((bytesRead = read(fd, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[bytesRead] = '\0';
+        content += buffer;
+    }
+    close(fd);
 
-	size_t serverPos = content.find("server {");
-	if (serverPos == std::string::npos) { return; }
+    size_t serverPos = content.find("server {");
+    if (serverPos == std::string::npos) { return; }
 
-	size_t start = content.find("{", serverPos) + 1;
-	size_t braceCount = 1;
-	size_t end = start;
-	
-	while (end < content.length() && braceCount > 0) {
-		if (content[end] == '{') { braceCount++; }
-		else if (content[end] == '}') { braceCount--; }
-		end++;
-	}
+    size_t start = content.find("{", serverPos) + 1;
+    size_t braceCount = 1;
+    size_t end = start;
+    
+    while (end < content.length() && braceCount > 0) {
+        if (content[end] == '{') { braceCount++; }
+        else if (content[end] == '}') { braceCount--; }
+        end++;
+    }
 
-	std::string serverBlock = content.substr(start, end - start - 1);
-	
-	std::istringstream iss(serverBlock);
-	std::string line;
-	
-	while (std::getline(iss, line)) {
-		size_t commentPos = line.find("//");
-		if (commentPos != std::string::npos) {
-			line = line.substr(0, commentPos);
-		}
-		
-		line.erase(0, line.find_first_not_of(" \t"));
-		line.erase(line.find_last_not_of(" \t;") + 1);
-		
-		if (line.empty()) { continue; }
+    std::string serverBlock = content.substr(start, end - start - 1);
 
-		if (line.find("listen ") == 0) {
-			this->_port = atoi(line.substr(7).c_str());
-		}
-		else if (line.find("server_name ") == 0) {
-			this->_serverName = line.substr(12);
-		}		else if (line.find("location ") == 0) {
-			this->_parseLocation(line, iss);
-		}
-	}
+    this->_ports.clear();
+    this->_parseServerBlock(serverBlock);
+    
+    if (this->_ports.empty())
+        this->_ports.push_back(8080);
 }
 
 void Config::_parseLocation(const std::string& locationLine, std::istringstream& iss) {
@@ -200,9 +161,17 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 		else if (line.find("autoindex ") == 0) {
 			std::string autoindexStr = line.substr(10);
 			location.autoindex = (autoindexStr == "on");
-		}
-		else if (line.find("client_max_body_size ") == 0) {
+		}		else if (line.find("client_max_body_size ") == 0) {
 			location.client_max_body_size = atoll(line.substr(21).c_str());
+		}
+		else if (line.find("cgi_extension ") == 0) {
+			std::string extensionsStr = line.substr(14);
+			std::istringstream extensionsIss(extensionsStr);
+			std::string extension;
+			location.cgi_extension.clear();
+			while (extensionsIss >> extension) {
+				location.cgi_extension.push_back(extension);
+			}
 		}
 		else if (line.find("return ") == 0) {
 			std::string returnStr = line.substr(7);
@@ -216,6 +185,49 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 	}
 	
 	this->_locations[path] = location;
+}
+
+void Config::_parseServerBlock(const std::string& serverBlock) {
+	std::istringstream iss(serverBlock);
+	std::string line;
+	
+	while (std::getline(iss, line)) {
+		size_t commentPos = line.find("//");
+		if (commentPos != std::string::npos) {
+			line = line.substr(0, commentPos);
+		}
+		
+		line.erase(0, line.find_first_not_of(" \t"));
+		line.erase(line.find_last_not_of(" \t;") + 1);
+		
+		if (line.empty()) { continue; }        if (line.find("listen ") == 0) {
+            std::string listenStr = line.substr(7);
+            
+            std::istringstream iss_ports(listenStr);
+            std::string portToken;
+            
+            while (std::getline(iss_ports, portToken, ',')) {
+                portToken.erase(0, portToken.find_first_not_of(" \t"));
+                portToken.erase(portToken.find_last_not_of(" \t") + 1);
+                
+                int port = atoi(portToken.c_str());
+                if (port > 0 && port <= 65535) {
+                    this->_ports.push_back(port);
+                }
+            }        }
+        else if (line.find("server_name ") == 0) {
+            this->_serverName = line.substr(12);
+        }
+        else if (line.find("timeout ") == 0) {
+            int timeout = atoi(line.substr(8).c_str());
+            if (timeout > 0) {
+                this->_timeout = timeout;
+            }
+        }
+		else if (line.find("location ") == 0) {
+			this->_parseLocation(line, iss);
+		}
+	}
 }
 
 void setDataFromFile(std::string path, std::map<std::string, std::string> *map) {
@@ -268,6 +280,73 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	std::vector<std::string> indexes = splitString(line);
 
 	for (size_t i = 0; i < indexes.size(); i++) {
-		(*map)[indexes.at(i)] = value;
+		(*map)[indexes.at(i)] = value;	}
+}
+
+locationConfig* Config::findLocationForPath(const std::string& path) const {
+	std::string bestMatch = "";
+	locationConfig* bestLocation = NULL;
+	
+	for (std::map<std::string, location_config>::const_iterator it = this->_locations.begin(); 
+		 it != this->_locations.end(); ++it) {
+		const std::string& locationPath = it->first;
+		
+		if (path.find(locationPath) == 0) {
+			if (locationPath.length() > bestMatch.length()) {
+				bestMatch = locationPath;
+				bestLocation = const_cast<locationConfig*>(&it->second);
+			}
+		}
 	}
+	
+	return bestLocation;
+}
+
+bool Config::isCgiPath(const std::string& path) const {
+	locationConfig* location = findLocationForPath(path);
+	if (!location) {
+		return false;
+	}
+	
+	if (location->cgi_extension.empty()) {
+		return false;
+	}
+	
+	size_t dotPos = path.find_last_of('.');
+	if (dotPos == std::string::npos) {
+		return false;
+	}
+	
+	std::string extension = path.substr(dotPos);
+	
+	for (size_t i = 0; i < location->cgi_extension.size(); i++) {
+		if (location->cgi_extension[i] == extension) {
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+std::string Config::getCgiScriptPath(const std::string& path) const {
+	locationConfig* location = findLocationForPath(path);
+	if (!location) {
+		return "";
+	}
+	
+	std::string scriptPath = location->root;
+	
+	std::string relativePath = path;
+	if (path.find(location->path) == 0 && location->path != "/") {
+		relativePath = path.substr(location->path.length());
+	}
+	
+	if (!scriptPath.empty() && scriptPath[scriptPath.length() - 1] != '/' && 
+		!relativePath.empty() && relativePath[0] != '/') {
+		scriptPath += "/";
+	}
+	
+	scriptPath += relativePath;
+	
+	return scriptPath;
 }
