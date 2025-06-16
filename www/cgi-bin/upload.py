@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import os, sys
+import os, sys, json
 
-print("Content-Type: text/html;charset=utf-8\r\n")
+print("Content-Type: application/json;charset=utf-8\r\n")
 
 try:
     content_length = int(os.environ.get('CONTENT_LENGTH', '0'))
@@ -13,7 +13,7 @@ try:
     filename = data_str[start:end]
     
     if not filename:
-        print("<h1>Uploading Failed ༼つಠ益ಠ༽つ </h1>")
+        print(json.dumps({"status": "error", "message": "No filename provided"}))
     else:
         file_start = data.find(b'\r\n\r\n') + 4
         file_end = data.rfind(b'\r\n-')
@@ -27,7 +27,7 @@ try:
         with open(file_path, 'wb') as f:
             f.write(file_data)
         
-        print(f"<h1>File \"{filename}\" Uploading Successful 🚬🗿 </h1>")
+        print(json.dumps({"status": "success", "filename": filename}))
 
-except:
-    print("<h1>Uploading Failed ༼つಠ益ಠ༽つ </h1>")
+except Exception as e:
+    print(json.dumps({"status": "error", "message": "Error uploading file"}))
