@@ -9,11 +9,28 @@ void handle_sigint(int signum) {
 	g_keepRunning = 0;
 }
 
-int main(void) {
+std::string getConfigFile(int argc, char **argv) {
+	if (argc <= 1)
+		throw std::exception();
+	std::string fileName = static_cast<std::string>(argv[1]);
+	if (!fileExists(fileName))
+		throw std::exception();
+	return fileName;
+}
+
+int main(int argc, char **argv) {
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
 
-	Config *config = new Config("./config/default.conf");
+	std::string config_file;
+	try {
+		config_file = getConfigFile(argc, argv);
+	} catch (std::exception &e) {
+		config_file = "./config/default.conf";
+		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << RED << BOLD << " Error your config file does not exist, default config will be used." << RESET << std::endl;
+	}
+
+	Config *config = new Config(config_file);
 
 	std::vector<int> ports = config->getServerPorts();
 	std::vector<BindingSocket*> bindingSockets;
