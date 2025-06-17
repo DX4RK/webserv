@@ -5,76 +5,29 @@ Get::Get(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->server_config = config;
 
-	if (this->_isCgiRequest(request)) {
-		this->_handleCgiRequest(request);
-		return;
-	}
-
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
-	bool canProcess = this->_handleFileUrl(request, root_page);
-
-	if (!canProcess) { return; }
-	this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
-}
-Get::~Get(void) {}
-
-void Get::_handleCgiRequest(Request &request) {
-	try {
-		std::string url = request.getUrl();
-
-		std::string scriptPath = this->server_config->getCgiScriptPath(url);
-		
-		if (scriptPath.empty()) {
-			this->_returnCode = 404;
-			return;
-		}
-
-		if (!fileExists(scriptPath)) {
-			this->_returnCode = 404;
-			return;
-		}
-
-		if (!hasReadPermission(scriptPath)) {
-			this->_returnCode = 403;
-			return;
-		}
-
-		std::string postData = "";
-
-		this->_executeCgiScript(request, scriptPath, postData);
-
-	} catch (std::exception &e) {
-		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
-		this->_returnCode = 500;
+	if (!this->_isCgiRequest(request)) {
+		bool canProcess = this->_handleFileUrl(request, root_page);
+		if (!canProcess) { return; }
+		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	}
 }
+Get::~Get(void) {}
 
 void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
 	std::map<std::string, std::string> headers;
 
-	headers["Content-Type"] = this->_getContentTypeFromScript(scriptPath);
-	
-	headers["Content-Length"] = ft_itoa(postData.length());
-
-	std::string method = postData.empty() ? request.getMethod() : "POST";
-
-	CGI cgi_handler(method, request.getProtocol(), headers, 8080);
+	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
 	cgi_handler.setEnvironment(scriptPath, *this->server_config);
-	
-	if (!postData.empty()) {
-		cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-	}
-	
 	cgi_handler.formatEnvironment();
-	this->_content = cgi_handler.execute(postData);
 
+	this->_content = cgi_handler.execute(postData);
 	this->_returnCode = 200;
 }
 
 bool Get::_isCgiRequest(Request &request) {
 	std::string url = request.getUrl();
-
 	return this->server_config->isCgiPath(url);
 }
 
@@ -82,9 +35,8 @@ void Get::process(Response &response, Request &request) {
 	(void)request;
 
 	if (this->_isCgiRequest(request)) {
-		std::string url = request.getUrl();
-		std::string scriptPath = this->server_config->getCgiScriptPath(url);
-		response.addHeader("Content-Type", this->_getContentTypeFromScript(scriptPath));
+		this->_handleCgiRequest(request);
+		this->_cgiResponse = true;
 		return;
 	}
 
@@ -104,9 +56,8 @@ void Get::process(Response &response, Request &request) {
 	ssize_t bytesRead;
 	std::string fileContent;
 
-	while ((bytesRead = read(this->_fileFd, buffer, sizeof(buffer))) > 0) {
+	while ((bytesRead = read(this->_fileFd, buffer, sizeof(buffer))) > 0)
 		fileContent.append(buffer, bytesRead);
-	}
 
 	close(this->_fileFd);
 
@@ -159,13 +110,31 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 	return (true);
 }
 
-std::string Get::_getContentTypeFromScript(const std::string& scriptPath) const {
-	size_t dotPos = scriptPath.find_last_of('.');
-	if (dotPos != std::string::npos) {
-		std::string extension = scriptPath.substr(dotPos);
-		if (extension == ".py" || extension == ".sh") {
-			return "application/json";
-		} 
+void Get::_handleCgiRequest(Request &request) {
+	try {
+		std::string url = request.getUrl();
+		std::string scriptPath = this->server_config->getCgiScriptPath(url);
+
+		if (scriptPath.empty()) {
+			this->_returnCode = 404;
+			return;
+		}
+
+		if (!fileExists(scriptPath)) {
+			this->_returnCode = 404;
+			return;
+		}
+
+		if (!hasReadPermission(scriptPath)) {
+			this->_returnCode = 403;
+			return;
+		}
+
+		std::string postData = "";
+		this->_executeCgiScript(request, scriptPath, postData);
+
+	} catch (std::exception &e) {
+		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
+		this->_returnCode = 500;
 	}
-	return "text/html";
 }

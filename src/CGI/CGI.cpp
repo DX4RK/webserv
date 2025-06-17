@@ -45,7 +45,7 @@ std::string CGI::execute(const std::string& body) {
 
 		std::string scriptPath = this->_env["SCRIPT_NAME"];
 		char *arguments[3];
-		
+
 		if (scriptPath.find(".py") != std::string::npos) {
 			arguments[0] = (char *)"/bin/python3";
 			arguments[1] = (char *)scriptPath.c_str();
@@ -77,7 +77,7 @@ std::string CGI::execute(const std::string& body) {
 		char buffer[4096];
 		ssize_t bytesRead;
 		this->_output = "";
-		
+
 		while ((bytesRead = read(stdout_pipe[0], buffer, sizeof(buffer) - 1)) > 0) {
 			buffer[bytesRead] = '\0';
 			this->_output += buffer;
@@ -86,7 +86,7 @@ std::string CGI::execute(const std::string& body) {
 		close(stdout_pipe[0]);
 		waitpid(pid, NULL, 0);
 	}
-	
+
 	return this->_output;
 }
 
@@ -118,7 +118,8 @@ void CGI::setEnvironment( std::string scriptPath, Config &config ) {
 	this->_addEnv("QUERY_STRING", "");
 
 	if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();
-	if (!this->_addEnvHeader("CONTENT_LENGTH", "Content-Length")) throw std::exception();
+	//if (!this->_addEnvHeader("CONTENT_LENGTH", "Content-Length")) throw std::exception();
+	this->_addEnvHeader("CONTENT_LENGTH", "Content-Length");
 
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
 	this->_addEnv("SERVER_SOFTWARE", config.getServerInfo());

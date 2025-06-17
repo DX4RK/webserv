@@ -14,8 +14,10 @@ public:
 
 	int getReturnCode( void );
 	std::string getContent( void );
+	bool isCgiResponse( void );
 protected:
 	int _returnCode;
+	bool _cgiResponse;
 
 	std::string _content;
 	std::string	_contentType;

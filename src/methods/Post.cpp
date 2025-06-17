@@ -10,6 +10,7 @@ Post::Post(Request &request, Config *config) {
 		return;
 	}
 
+	this->_cgiResponse = true; // TO REMOVE
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
 	if (this->_handleFileUrl(request, root_page)) return;
@@ -28,13 +29,13 @@ void Post::_handleCgiRequest(Request &request) {
 		}
 		else if (url == "/forum/post") {
 			std::string session_user = this->_getSessionUser(request);
-			
+
 			if (session_user.empty()) {
 				this->_content = "{\"success\": false, \"error\": \"Not logged in\"}";
 				this->_returnCode = 401;
 				return;
 			}
-			
+
 			scriptPath = "./www/cgi-bin/forum.py";
 			postData = "type=forum&user=" + session_user + "&" + request.getBody();
 		}
@@ -86,15 +87,15 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 
 bool Post::_isCgiRequest(Request &request) {
 	std::string url = request.getUrl();
-	
+
 	if (url == "/login/standard" || url == "/forum/post") {
 		return true;
 	}
-	
+
 	if (url.find("/cgi-bin/") == 0) {
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -102,7 +103,7 @@ bool Post::_isCgiRequest(Request &request) {
 std::string Post::_getSessionUser(Request &request) {
 	std::map<std::string, std::string> headers = request.getHeaders();
 	std::string cookie_header = "";
-	
+
 	// Chercher le header Cookie
 	std::map<std::string, std::string>::iterator it;
 	for (it = headers.begin(); it != headers.end(); ++it) {
@@ -111,40 +112,40 @@ std::string Post::_getSessionUser(Request &request) {
 			break;
 		}
 	}
-	
+
 	if (cookie_header.empty()) return "";
-	
+
 	// Parser le cookie session_user=username
 	size_t pos = cookie_header.find("session_user=");
 	if (pos == std::string::npos) return "";
-	
+
 	size_t start = pos + 13; // longueur de "session_user="
 	size_t end = cookie_header.find(";", start);
 	if (end == std::string::npos) end = cookie_header.length();
-	
+
 	return cookie_header.substr(start, end - start);
 }
 
 void Post::process(Response &response, Request &request) {
 	if (this->_isCgiRequest(request)) {
 		std::string url = request.getUrl();
-		
+
 		if (url == "/login/standard") {
 			response.addHeader("Location", "/");
 			return;
 		}
-		
+
 		if (url == "/forum/post") {
 			response.addHeader("Content-Type", "application/json");
 			return;
 		}
-		
+
 		if (url.find(".py") != std::string::npos) {
 			response.addHeader("Content-Type", "application/json");
 		} else {
 			response.addHeader("Content-Type", "text/html");
 		}
-		
+
 		return;
 	}
 
