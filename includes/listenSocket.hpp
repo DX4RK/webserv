@@ -13,7 +13,7 @@ public:
 	~ListenSocket( void );
 	ListenSocket( std::vector<BindingSocket*> bindingSockets, Config *config );
 
-	void launch( void );
+	void launch( volatile sig_atomic_t &keepRunning );
 	std::string getBuffer( void ) const;
 private:
 	int _newSocket;

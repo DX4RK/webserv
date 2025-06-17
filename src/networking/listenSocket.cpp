@@ -1,10 +1,14 @@
 #include "listenSocket.hpp"
 
-ListenSocket::~ListenSocket(void) {}
+ListenSocket::~ListenSocket(void) {
+	this->_pollfds.clear();
+	this->_clientBuffers.clear();
+	this->_sockets.clear();
+}
 
 ListenSocket::ListenSocket(std::vector<BindingSocket*> bindingSockets, Config *config) : _sockets(bindingSockets) {
 	this->server_config = config;
-	
+
 	// Setup listening pour tous les sockets
 	for (size_t i = 0; i < this->_sockets.size(); i++) {
 		int sock = this->_sockets[i]->get_sock();
@@ -86,7 +90,7 @@ void ListenSocket::handler() {
 	}
 
 	this->_buffer = request;
-	
+
 	Request req(*this, server_config);
 	Response response(req, server_config);
 
@@ -115,12 +119,12 @@ void ListenSocket::responder(void) {
 	this->response = "";
 }
 
-void ListenSocket::launch() {
+void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 	std::vector<int> ports = this->server_config->getServerPorts();
 	std::cout << LIGHT_BLUE << BOLD
 	<< "[webserv]" << RESET
 	<< " website is ready, urls: " << GREEN << BOLD;
-	
+
 	for (size_t i = 0; i < ports.size(); i++) {
 		std::cout << "http://" << this->server_config->getServerName() << ":" << ports[i];
 		if (i < ports.size() - 1) std::cout << ", ";
@@ -128,7 +132,7 @@ void ListenSocket::launch() {
 	std::cout << RESET << std::endl << std::endl;
 
 	// Ajouter sockets listening au poll
-	for (size_t i = 0; i < this->_sockets.size(); i++) 
+	for (size_t i = 0; i < this->_sockets.size(); i++)
 	{
 		pollfd listenPfd;
 		listenPfd.fd = this->_sockets[i]->get_sock();
@@ -137,16 +141,20 @@ void ListenSocket::launch() {
 		this->_pollfds.push_back(listenPfd);
 	}
 
-	while (true) 
+	while (keepRunning)
 	{
-		int pollResult = poll(&this->_pollfds[0], this->_pollfds.size(), -1);
-		if (pollResult < 0)
+		int pollResult = poll(&this->_pollfds[0], this->_pollfds.size(), 1000);
+
+		if (pollResult < 0) {
+			if (errno == EINTR) // interrupted by signal
+				continue;
 			make_error("poll() failed", EXIT_FAILURE);
+		}
 
 		// Vérifier nouveaux clients sur sockets listening
 		for (size_t i = 0; i < this->_sockets.size(); i++) {
 			int listenSock = this->_sockets[i]->get_sock();
-			
+
 			for (size_t j = 0; j < this->_pollfds.size(); j++) {
 				if (this->_pollfds[j].fd == listenSock && (this->_pollfds[j].revents & POLLIN)) {
 					// Nouveau client sur socket listening
@@ -169,18 +177,18 @@ void ListenSocket::launch() {
 		}
 
 		// Traiter clients existants
-		for (size_t i = this->_sockets.size(); i < this->_pollfds.size(); ) 
+		for (size_t i = this->_sockets.size(); i < this->_pollfds.size(); )
 		{
-			if (this->_pollfds[i].revents & POLLIN) 
+			if (this->_pollfds[i].revents & POLLIN)
 			{
 				this->_newSocket = this->_pollfds[i].fd;
 				this->handler();
 				this->responder();
-				
+
 				// Supprimer client du poll
 				this->_clientBuffers.erase(this->_newSocket);
 				this->_pollfds.erase(this->_pollfds.begin() + i);
-			} 
+			}
 			else
 				i++;
 		}
