@@ -10,7 +10,6 @@ void handle_sigint(int signum) {
 }
 
 int main(void) {
-
 	signal(SIGINT, handle_sigint);
 	signal(SIGTERM, handle_sigint);
 
@@ -31,13 +30,12 @@ int main(void) {
 		std::cerr << "Fatal error: " << e.what() << std::endl;
 	}
 
-	for (size_t i = 0; i < bindingSockets.size(); i++) {
-		delete bindingSockets[i];
+	{
+		for (size_t i = 0; i < bindingSockets.size(); i++)
+			delete bindingSockets[i];
+		bindingSockets.clear();
 	}
 
 	delete config;
-
-
-
 	return 0;
 }
