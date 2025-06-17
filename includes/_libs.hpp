@@ -2,6 +2,7 @@
 
 #include <map>
 #include <vector>
+#include <cerrno>
 #include <string>
 #include <cctype>
 #include <cstring>
