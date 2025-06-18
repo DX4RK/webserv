@@ -231,7 +231,7 @@ struct path_parsing parse_path(std::string path) {
 	result.can_read = intToBool(access(path_name, R_OK));
 	result.can_write = intToBool(access(path_name, W_OK));
 	result.can_exec = intToBool(access(path_name, X_OK));
-	std::cout << result.exist << std::endl;
+
 	result.full_perms = result.exist != false \
 		&& result.can_read != false \
 		&& result.can_write != false \
