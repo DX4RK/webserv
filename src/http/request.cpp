@@ -17,7 +17,6 @@ Request::Request(ListenSocket &listener, Config *config) {
 	// aborted crash fixed
 	std::vector<std::string> words = splitString(lines.at(0));
 
-	std::cout << lines[0] << std::endl;
 	if (words.size() < 3)
 	{
 		this->_statusCode = 400;
@@ -51,13 +50,13 @@ Request::Request(ListenSocket &listener, Config *config) {
 					break;
 				}
 			}
-			
+
 			for (size_t i = body_line; i < body_end; i++) {
 				std::string jump = "\n";
 				std::string line = lines.at(i);
 
 				if (i + 1 >= body_end) { jump = ""; }
-				
+
 				if (isMultipart) {
 					this->_body += line + jump;
 				} else {
@@ -70,7 +69,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	this->_url = url;
 
-	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; std::cout << "heee" << std::endl; return; }
+	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
 
 	if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
@@ -95,13 +94,13 @@ Request::Request(ListenSocket &listener, Config *config) {
 				break;
 			}
 		}
-		
+
 		for (size_t i = body_line; i < body_end; i++) {
 			std::string jump = "\n";
 			std::string line = lines.at(i);
 
 			if (i + 1 >= body_end) { jump = ""; }
-			
+
 			if (isMultipart) {
 				this->_body += line + jump;
 			} else {
