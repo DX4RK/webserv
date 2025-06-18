@@ -34,7 +34,7 @@ Response::Response(Request &request, Config *config) {
 			Method methodResult = this->_processRequest(request.getMethod(), request);
 			this->_responseCode = methodResult.getReturnCode();
 
-			if (this->_responseCode == 0) { this->_responseCode = 500; std::cout << "yes" << std::endl; return; }
+			if (this->_responseCode == 0) { this->_responseCode = 500; return; }
 
 			CGI_response = methodResult.isCgiResponse();
 			methodContent = methodResult.getContent();
@@ -45,9 +45,7 @@ Response::Response(Request &request, Config *config) {
 	std::string responseMessage = this->server_config->getStatusCode(responseCode);
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
-
 	if (CGI_response) {
-		std::cout << "yes" << std::endl;
 		if (methodContent.find("Content-Type:") == 0 || methodContent.find("Content-type:") == 0)
 			this->_response += this->_headers + methodContent;
 	} else {
