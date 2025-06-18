@@ -10,7 +10,7 @@ Post::Post(Request &request, Config *config) {
 		return;
 	}
 
-	this->_cgiResponse = true; // TO REMOVE
+	this->_cgiResponse = true;
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
 	if (this->_handleFileUrl(request, root_page)) return;
@@ -70,7 +70,6 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgi_handler.formatEnvironment();
 	std::string cgiOutput = cgi_handler.execute(postData);
 
-	// Parse CGI output to separate headers from content
 	size_t headerEndPos = cgiOutput.find("\r\n\r\n");
 	if (headerEndPos == std::string::npos) {
 		headerEndPos = cgiOutput.find("\n\n");
@@ -82,10 +81,8 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	}
 
 	if (headerEndPos != std::string::npos) {
-		// Extract only the content part (after headers)
 		this->_content = cgiOutput.substr(headerEndPos);
 	} else {
-		// No headers found, use entire output
 		this->_content = cgiOutput;
 	}
 
