@@ -276,11 +276,11 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 			break; 
 		}
 	}
-
 	std::vector<std::string> indexes = splitString(line);
 
 	for (size_t i = 0; i < indexes.size(); i++) {
-		(*map)[indexes.at(i)] = value;	}
+		(*map)[indexes.at(i)] = value;
+	}
 }
 
 locationConfig* Config::findLocationForPath(const std::string& path) const {
@@ -349,4 +349,26 @@ std::string Config::getCgiScriptPath(const std::string& path) const {
 	scriptPath += relativePath;
 	
 	return scriptPath;
+}
+
+std::vector<std::string> Config::getCgiExtensions() const {
+	// Retourner les extensions CGI du premier location qui en a
+	std::map<std::string, location_config>::const_iterator it;
+	for (it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+		if (!it->second.cgi_extension.empty()) {
+			return it->second.cgi_extension;
+		}
+	}
+	return std::vector<std::string>();  // Vecteur vide si aucun CGI configuré
+}
+
+std::string Config::getCgiPath() const {
+	// Retourner le root du premier location CGI trouvé
+	std::map<std::string, location_config>::const_iterator it;
+	for (it = this->_locations.begin(); it != this->_locations.end(); ++it) {
+		if (!it->second.cgi_extension.empty()) {
+			return it->second.root;
+		}
+	}
+	return "./www/cgi-bin";  // Fallback par défaut
 }

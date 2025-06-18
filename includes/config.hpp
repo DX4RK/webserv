@@ -38,6 +38,8 @@ public:
 	// CGI methods (dynamiques basées sur la configuration)
 	bool isCgiPath(const std::string& path) const;
 	std::string getCgiScriptPath(const std::string& path) const;
+	std::vector<std::string> getCgiExtensions() const;
+	std::string getCgiPath() const;
 	locationConfig* findLocationForPath(const std::string& path) const;
 
 private:
