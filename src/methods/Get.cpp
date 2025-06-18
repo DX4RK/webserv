@@ -114,7 +114,6 @@ void Get::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
 		std::string scriptPath = this->server_config->getCgiScriptPath(url);
-
 		if (scriptPath.empty()) {
 			this->_returnCode = 404;
 			return;
@@ -132,7 +131,6 @@ void Get::_handleCgiRequest(Request &request) {
 
 		std::string postData = "";
 		this->_executeCgiScript(request, scriptPath, postData);
-
 	} catch (std::exception &e) {
 		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
 		this->_returnCode = 500;

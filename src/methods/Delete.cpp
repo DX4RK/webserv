@@ -21,7 +21,7 @@ void Delete::process(Response &response, Request &request) {
 		const_cast<char*>(this->_filePath.c_str()),
 		NULL
 	};
-	std::cout << args[1] << std::endl;
+
 	execve("/bin/rm", args, NULL);
 	perror("execve");
 	return;
@@ -33,11 +33,9 @@ bool Delete::_handleFileUrl(Request &request, const std::string root) {
 
 	this->_fileName = getLastSub(fullPath, '/');
 	T_PATH_PARSING path_permissions = parse_path(fullPath);
-	std::cout << path_permissions.exist << std::endl;
 
 	if (!path_permissions.exist) {
 		this->_returnCode = 404;
-		std::cout << "eere" << std::endl;
 		return (false);
 	} else if (!path_permissions.can_write) {
 		this->_returnCode = 403;
