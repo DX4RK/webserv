@@ -41,15 +41,28 @@ Request::Request(ListenSocket &listener, Config *config) {
 			this->_formatHeader(line);
 		}
 
-		// Body parsing
 		size_t body_end = lines.size();
 		if (lines.size() > body_line) {
+			bool isMultipart = false;
+			std::map<std::string, std::string>::iterator it;
+			for (it = this->_headers.begin(); it != this->_headers.end(); ++it) {
+				if (it->first == "Content-Type" && it->second.find("multipart/") != std::string::npos) {
+					isMultipart = true;
+					break;
+				}
+			}
+			
 			for (size_t i = body_line; i < body_end; i++) {
 				std::string jump = "\n";
 				std::string line = lines.at(i);
 
 				if (i + 1 >= body_end) { jump = ""; }
-				this->_body += trim(line, false) + jump;
+				
+				if (isMultipart) {
+					this->_body += line + jump;
+				} else {
+					this->_body += trim(line, false) + jump;
+				}
 			}
 		}
 		return;
@@ -72,16 +85,28 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	}
 
-	// BODY //
-
 	size_t body_end = lines.size();
 	if (lines.size() > body_line) {
+		bool isMultipart = false;
+		std::map<std::string, std::string>::iterator it;
+		for (it = this->_headers.begin(); it != this->_headers.end(); ++it) {
+			if (it->first == "Content-Type" && it->second.find("multipart/") != std::string::npos) {
+				isMultipart = true;
+				break;
+			}
+		}
+		
 		for (size_t i = body_line; i < body_end; i++) {
 			std::string jump = "\n";
 			std::string line = lines.at(i);
 
 			if (i + 1 >= body_end) { jump = ""; }
-			this->_body += trim(line, false) + jump;
+			
+			if (isMultipart) {
+				this->_body += line + jump;
+			} else {
+				this->_body += trim(line, false) + jump;
+			}
 		}
 	}
 
