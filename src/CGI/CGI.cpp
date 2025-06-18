@@ -117,8 +117,9 @@ void CGI::setEnvironment( std::string scriptPath, Config &config ) {
 	this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("QUERY_STRING", "");
 
-	if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();
+	//if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();
 	//if (!this->_addEnvHeader("CONTENT_LENGTH", "Content-Length")) throw std::exception();
+	this->_addEnvHeader("CONTENT_TYPE", "Content-Type");
 	this->_addEnvHeader("CONTENT_LENGTH", "Content-Length");
 
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
