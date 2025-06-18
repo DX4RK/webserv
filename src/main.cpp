@@ -10,8 +10,13 @@ void handle_sigint(int signum) {
 }
 
 std::string getConfigFile(int argc, char **argv) {
-	if (argc <= 1)
+	if (argc <= 1) {
+		// Try default config file first
+		std::string defaultConfig = "./config/default.conf";
+		if (fileExists(defaultConfig))
+			return defaultConfig;
 		throw std::exception();
+	}
 	std::string fileName = static_cast<std::string>(argv[1]);
 	if (!fileExists(fileName))
 		throw std::exception();
@@ -27,7 +32,11 @@ int main(int argc, char **argv) {
 		config_file = getConfigFile(argc, argv);
 	} catch (std::exception &e) {
 		config_file = "./config/default.conf";
-		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << RED << BOLD << " Error your config file does not exist, default config will be used." << RESET << std::endl;
+		if (argc > 1) {
+			std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << RED << BOLD << " Error: specified config file does not exist, default config will be used." << RESET << std::endl;
+		} else {
+			std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << LIGHT_YELLOW << BOLD << " Warning: no config file specified, using default config." << RESET << std::endl;
+		}
 	}
 
 	Config *config = new Config(config_file);
