@@ -42,21 +42,21 @@ std::string Config::getStatusCode(const std::string& code) {
 	std::map<std::string, std::string>::iterator it = this->_codeStatus.find(code);
 	if (it != this->_codeStatus.end()) {
 		return it->second;	}
-	return "???";
+	return "unknown_status";
 }
 
-std::vector<int> Config::getServerPorts(void) const { 
-	return this->_ports; 
+std::vector<int> Config::getServerPorts(void) const {
+	return this->_ports;
 }
 
-int Config::getTimeout(void) const { 
-	return this->_timeout; 
+int Config::getTimeout(void) const {
+	return this->_timeout;
 }
 
 std::string Config::getLocationRoot(std::string path) {
 	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
-	if (it != this->_locations.end()) { 
-		return it->second.root; 
+	if (it != this->_locations.end()) {
+		return it->second.root;
 	}
 	return "./www";
 }
@@ -68,8 +68,8 @@ std::string Config::getServerInfo() const {
 	return main;
 }
 
-std::string Config::getServerName() const { 
-	return this->_serverName; 
+std::string Config::getServerName() const {
+	return this->_serverName;
 }
 
 void Config::_parseConfigFile(const std::string& configPath) {
@@ -79,7 +79,7 @@ void Config::_parseConfigFile(const std::string& configPath) {
     char buffer[8192];
     std::string content;
     ssize_t bytesRead;
-    
+
     while ((bytesRead = read(fd, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytesRead] = '\0';
         content += buffer;
@@ -92,7 +92,7 @@ void Config::_parseConfigFile(const std::string& configPath) {
     size_t start = content.find("{", serverPos) + 1;
     size_t braceCount = 1;
     size_t end = start;
-    
+
     while (end < content.length() && braceCount > 0) {
         if (content[end] == '{') { braceCount++; }
         else if (content[end] == '}') { braceCount--; }
@@ -103,7 +103,7 @@ void Config::_parseConfigFile(const std::string& configPath) {
 
     this->_ports.clear();
     this->_parseServerBlock(serverBlock);
-    
+
     if (this->_ports.empty())
         this->_ports.push_back(8080);
 }
@@ -112,31 +112,31 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 	size_t pathStart = locationLine.find("location ") + 9;
 	size_t pathEnd = locationLine.find(" {");
 	if (pathEnd == std::string::npos) { pathEnd = locationLine.find("{"); }
-	
+
 	std::string path = locationLine.substr(pathStart, pathEnd - pathStart);
 	path.erase(0, path.find_first_not_of(" \t"));
 	path.erase(path.find_last_not_of(" \t") + 1);
-	
+
 	locationConfig location;
 	location.path = path;
 	location.root = "./www";
 	location.autoindex = false;
 	location.client_max_body_size = 1048576;
 	location.redirect_code = 0;
-	
+
 	std::string line;
 	while (std::getline(iss, line)) {
 		size_t commentPos = line.find("//");
 		if (commentPos != std::string::npos) {
 			line = line.substr(0, commentPos);
 		}
-		
+
 		line.erase(0, line.find_first_not_of(" \t"));
 		line.erase(line.find_last_not_of(" \t;") + 1);
-		
+
 		if (line.empty()) { continue; }
 		if (line == "}") { break; }
-		
+
 		if (line.find("root ") == 0) {
 			location.root = line.substr(5);
 		}
@@ -183,33 +183,33 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 			}
 		}
 	}
-	
+
 	this->_locations[path] = location;
 }
 
 void Config::_parseServerBlock(const std::string& serverBlock) {
 	std::istringstream iss(serverBlock);
 	std::string line;
-	
+
 	while (std::getline(iss, line)) {
 		size_t commentPos = line.find("//");
 		if (commentPos != std::string::npos) {
 			line = line.substr(0, commentPos);
 		}
-		
+
 		line.erase(0, line.find_first_not_of(" \t"));
 		line.erase(line.find_last_not_of(" \t;") + 1);
-		
+
 		if (line.empty()) { continue; }        if (line.find("listen ") == 0) {
             std::string listenStr = line.substr(7);
-            
+
             std::istringstream iss_ports(listenStr);
             std::string portToken;
-            
+
             while (std::getline(iss_ports, portToken, ',')) {
                 portToken.erase(0, portToken.find_first_not_of(" \t"));
                 portToken.erase(portToken.find_last_not_of(" \t") + 1);
-                
+
                 int port = atoi(portToken.c_str());
                 if (port > 0 && port <= 65535) {
                     this->_ports.push_back(port);
@@ -261,9 +261,9 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	int start = skip_space(line);
 
 	for (size_t i = (size_t)start; i < line.length(); i++) {
-		if (isspace(line[i]) && isspace(line[i + 1])) { 
-			end = (int)i; 
-			break; 
+		if (isspace(line[i]) && isspace(line[i + 1])) {
+			end = (int)i;
+			break;
 		}
 	}
 
@@ -271,9 +271,9 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	line = line.substr(end, line.size() - end);
 
 	for (size_t i = (size_t)start; i < line.length(); i++) {
-		if (!isspace(line[i])) { 
-			line = line.substr(i, line.size() - (i + 1)); 
-			break; 
+		if (!isspace(line[i])) {
+			line = line.substr(i, line.size() - (i + 1));
+			break;
 		}
 	}
 	std::vector<std::string> indexes = splitString(line);
@@ -286,11 +286,11 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 locationConfig* Config::findLocationForPath(const std::string& path) const {
 	std::string bestMatch = "";
 	locationConfig* bestLocation = NULL;
-	
-	for (std::map<std::string, location_config>::const_iterator it = this->_locations.begin(); 
+
+	for (std::map<std::string, location_config>::const_iterator it = this->_locations.begin();
 		 it != this->_locations.end(); ++it) {
 		const std::string& locationPath = it->first;
-		
+
 		if (path.find(locationPath) == 0) {
 			if (locationPath.length() > bestMatch.length()) {
 				bestMatch = locationPath;
@@ -298,7 +298,7 @@ locationConfig* Config::findLocationForPath(const std::string& path) const {
 			}
 		}
 	}
-	
+
 	return bestLocation;
 }
 
@@ -307,24 +307,24 @@ bool Config::isCgiPath(const std::string& path) const {
 	if (!location) {
 		return false;
 	}
-	
+
 	if (location->cgi_extension.empty()) {
 		return false;
 	}
-	
+
 	size_t dotPos = path.find_last_of('.');
 	if (dotPos == std::string::npos) {
 		return false;
 	}
-	
+
 	std::string extension = path.substr(dotPos);
-	
+
 	for (size_t i = 0; i < location->cgi_extension.size(); i++) {
 		if (location->cgi_extension[i] == extension) {
 			return true;
 		}
 	}
-	
+
 	return false;
 }
 
@@ -333,21 +333,21 @@ std::string Config::getCgiScriptPath(const std::string& path) const {
 	if (!location) {
 		return "";
 	}
-	
+
 	std::string scriptPath = location->root;
-	
+
 	std::string relativePath = path;
 	if (path.find(location->path) == 0 && location->path != "/") {
 		relativePath = path.substr(location->path.length());
 	}
-	
-	if (!scriptPath.empty() && scriptPath[scriptPath.length() - 1] != '/' && 
+
+	if (!scriptPath.empty() && scriptPath[scriptPath.length() - 1] != '/' &&
 		!relativePath.empty() && relativePath[0] != '/') {
 		scriptPath += "/";
 	}
-	
+
 	scriptPath += relativePath;
-	
+
 	return scriptPath;
 }
 
