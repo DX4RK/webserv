@@ -61,6 +61,21 @@ std::string Config::getLocationRoot(std::string path) {
 	return "./www";
 }
 
+bool Config::isLocationMethodsAllowed(std::string path, std::string method) {
+	std::cout << "----------------" << std::endl;
+	std::cout << path << std::endl;
+	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
+	if (it != this->_locations.end()) {
+		int methodsCount = std::count(it->second.allowed_methods.begin(), it->second.allowed_methods.end(), method);
+		std::cout << methodsCount << std::endl;
+		if (methodsCount > 0)
+			return true;
+		return false;
+	}
+	std::cout << "no locations defined, all methods are allowed." << std::endl;
+	return (true);
+}
+
 std::string Config::getServerInfo() const {
 	std::string main = SERVER_NAME;
 	main += "/";

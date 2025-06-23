@@ -34,7 +34,9 @@ public:
 	std::string getLocationRoot(std::string path);
 	std::string getStatusCode(const std::string& code);
 	std::string getContentType(const std::string& fileName);
-	
+
+	bool isLocationMethodsAllowed(std::string path, std::string method);
+
 	// CGI methods (dynamiques basées sur la configuration)
 	bool isCgiPath(const std::string& path) const;
 	std::string getCgiScriptPath(const std::string& path) const;

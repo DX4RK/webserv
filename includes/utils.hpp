@@ -39,6 +39,7 @@ int skip_space(std::string str);
 
 std::string getTime(void);
 std::string ft_upper(std::string str);
+std::string findPath(std::string url);
 std::string extractPath(const std::string& url);
 std::string getFileModifiedTime(std::string path);
 std::vector<std::string> getLines(std::string buffer);

@@ -76,37 +76,31 @@ void Get::process(Response &response, Request &request) {
 }
 
 bool Get::_handleFileUrl(Request &request, const std::string root) {
-	const std::string &filePath = request.getUrl();
-	std::string fullPath = root + filePath;
-	std::map<std::string, std::string>::const_iterator it = request.getHeaders().find("Referer");
+	(void)root;
+	
+	std::string path = request.getPath();
+	this->_fileName = getLastSub(path, '/');
 
-	if (it != request.getHeaders().end()) {
-		std::string path = extractPath(request.getHeaders()["Referer"]);
-		fullPath = WEB_ROOT + trim(path, false) + trim(filePath, false);
-	}
-
-	this->_fileName = getLastSub(fullPath, '/');
-
-	if (!fileExists(fullPath)) {
+	if (!fileExists(path)) {
 		this->_returnCode = 404;
 		return (false);
 	}
 
-	if (isDirectory(fullPath)) {
-		fullPath += "/index.html";
+	if (isDirectory(path)) {
+		path += "/index.html";
 		this->_fileName = "index";
-		if (!fileExists(fullPath)) {
+		if (!fileExists(path)) {
 			this->_returnCode = 403;
 			return (false);
 		}
 	}
 
-	if (!hasReadPermission(fullPath)) {
+	if (!hasReadPermission(path)) {
 		this->_returnCode = 403;
 		return (false);
 	}
 
-	this->_filePath = fullPath;
+	this->_filePath = path;
 	return (true);
 }
 
