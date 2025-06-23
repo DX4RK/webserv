@@ -238,3 +238,13 @@ struct path_parsing parse_path(std::string path) {
 		&& result.can_exec != false;
 	return (result);
 }
+
+std::string findPath(std::string url) {
+	std::cout << url << std::endl;
+	url = url.substr(1, url.length() - 1);
+	std::size_t lastSlash = url.find_last_of('/');
+
+	if (lastSlash == std::string::npos || lastSlash == 0)
+		return ("/");
+	return url.substr(0, lastSlash);
+}

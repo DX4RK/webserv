@@ -15,6 +15,7 @@ public:
 	int getStatusCode( void ) const;
 
 	std::string getUrl( void ) const;
+	std::string getPath( void ) const;
 	std::string getBody( void ) const;
 	std::string getMethod( void ) const;
 	std::string getProtocol( void ) const;
@@ -28,6 +29,9 @@ private:
 	bool _cgiEnabled;
 
 	std::string _url;
+	std::string _path;
+	std::string _location;
+
 	std::string _refer;
 	std::string _body;
 	std::string _method;
