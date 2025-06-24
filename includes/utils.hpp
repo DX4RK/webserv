@@ -45,6 +45,7 @@ std::string getFileModifiedTime(std::string path);
 std::vector<std::string> getLines(std::string buffer);
 std::vector<std::string> splitString(std::string str);
 std::string getLastSub(const std::string& src, char c);
+std::string getFileName(std::string file_name);
 std::string trim(const std::string& str, bool except_newline);
 /*std::string getContentType(const std::string& file_path);*/
 

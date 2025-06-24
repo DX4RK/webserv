@@ -248,3 +248,10 @@ std::string findPath(std::string url) {
 		return ("/");
 	return url.substr(0, lastSlash);
 }
+
+std::string getFileName(std::string file_name) {
+	std::size_t dot_pos = file_name.find_first_of(".");
+	if (dot_pos == std::string::npos || dot_pos == 0)
+		return "";
+	return file_name.substr(0, dot_pos);
+}
