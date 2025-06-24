@@ -7,7 +7,7 @@ Get::Get(Request &request, Config *config) {
 
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
-	if (!this->_isCgiRequest(request)) {
+	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation())) {
 		bool canProcess = this->_handleFileUrl(request, root_page);
 		if (!canProcess) { return; }
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
@@ -19,7 +19,7 @@ void Get::_executeCgiScript(Request &request, const std::string &scriptPath, con
 	std::map<std::string, std::string> headers;
 
 	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
-	cgi_handler.setEnvironment(scriptPath, *this->server_config);
+	cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
 	cgi_handler.formatEnvironment();
 
 	this->_content = cgi_handler.execute(postData);
@@ -33,6 +33,12 @@ bool Get::_isCgiRequest(Request &request) {
 
 void Get::process(Response &response, Request &request) {
 	(void)request;
+
+	if (this->server_config->listLocation(request.getLocation())) {
+		this->_executeCgiScript(request, LISTING_CGI, "");
+		this->_cgiResponse = true;
+		return;
+	}
 
 	if (this->_isCgiRequest(request)) {
 		this->_handleCgiRequest(request);

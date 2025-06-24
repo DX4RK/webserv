@@ -36,12 +36,12 @@ void Put::process(Response &response, Request &request) {
 	if (fileExists(this->_filePath)) {
 		this->_returnCode = 200;
 	} else {
-		this->_returnCode = 201; 
+		this->_returnCode = 201;
 	}
 
 	if (request.isCgiEnabled()) {
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
-		cgi_handler.setEnvironment(this->_filePath, *this->server_config);
+		cgi_handler.setEnvironment(this->_filePath, request.getLocation(), *this->server_config);
 		cgi_handler.formatEnvironment();
 		cgi_handler.execute(request.getBody());
 	}
@@ -56,16 +56,16 @@ bool Put::_handleFileUrl(Request &request, const std::string root) {
 	this->_fileName = getLastSub(fullPath, '/');
 
 	// Pour PUT on peut créer un nouveau fichier donc pas besoin de vérifier l'existence
-	if (isDirectory(fullPath)) { 
+	if (isDirectory(fullPath)) {
 		this->_returnCode = 405;
-		return (false); 
+		return (false);
 	}
-	
+
 	// Vérifier les permissions d'écriture
 	std::string parentDir = fullPath.substr(0, fullPath.find_last_of('/'));
-	if (!this->_hasWritePermission(parentDir)) { 
-		this->_returnCode = 403; 
-		return (false); 
+	if (!this->_hasWritePermission(parentDir)) {
+		this->_returnCode = 403;
+		return (false);
 	}
 
 	this->_filePath = fullPath;

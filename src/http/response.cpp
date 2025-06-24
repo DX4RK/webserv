@@ -78,7 +78,7 @@ void Response::_handleGithubCallback(Request &request) {
 			headers["Content-Length"] = ft_itoa(postData.length());
 
 			CGI cgi_handler("POST", "HTTP/1.1", headers, 8080);
-			cgi_handler.setEnvironment("./www/cgi-bin/login.py", *this->server_config);
+			cgi_handler.setEnvironment("./www/cgi-bin/login.py", request.getLocation(), *this->server_config);
 			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 			cgi_handler.formatEnvironment();
 			std::string cgi_output = cgi_handler.execute(postData);  // Capturer la sortie

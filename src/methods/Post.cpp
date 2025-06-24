@@ -20,7 +20,7 @@ Post::~Post(void) {}
 void Post::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
-		
+
 		location_config* location = this->server_config->findLocationForPath(url);
 		if (!location) {
 			this->_returnCode = 404;
@@ -50,7 +50,7 @@ void Post::_handleCgiRequest(Request &request) {
 
 void Post::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
 	std::map<std::string, std::string> headers = request.getHeaders();
-	
+
 	std::string contentType = "application/x-www-form-urlencoded";
 	std::map<std::string, std::string>::iterator ctIt;
 	for (ctIt = headers.begin(); ctIt != headers.end(); ++ctIt) {
@@ -59,13 +59,13 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 			break;
 		}
 	}
-	
+
 	std::map<std::string, std::string> cgiHeaders;
 	cgiHeaders["Content-Type"] = contentType;
 	cgiHeaders["Content-Length"] = ft_itoa(postData.length());
 
 	CGI cgi_handler("POST", request.getProtocol(), cgiHeaders, 8080);
-	cgi_handler.setEnvironment(scriptPath, *this->server_config);
+	cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 	cgi_handler.formatEnvironment();
 	std::string cgiOutput = cgi_handler.execute(postData);
@@ -133,7 +133,7 @@ std::string Post::_getSessionUser(Request &request) {
 void Post::process(Response &response, Request &request) {
 	if (this->_isCgiRequest(request)) {
 		std::string url = request.getUrl();
-		
+
 		// Déterminer le Content-Type basé sur l'extension
 		if (url.find(".py") != std::string::npos) {
 			response.addHeader("Content-Type", "application/json");
@@ -150,9 +150,9 @@ void Post::process(Response &response, Request &request) {
 	if (request.isCgiEnabled()) {
 		std::string url = request.getUrl();
 		std::string scriptPath = this->server_config->getCgiScriptPath(url);
-		
+
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
-		cgi_handler.setEnvironment(scriptPath, *this->server_config);
+		cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
 		cgi_handler.formatEnvironment();
 		this->_content = cgi_handler.execute(request.getBody());
 	}
