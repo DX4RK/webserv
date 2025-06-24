@@ -112,9 +112,10 @@ char **CGI::formatEnvironment() {
 	return envp;
 }
 
-void CGI::setEnvironment( std::string scriptPath, Config &config ) {
+void CGI::setEnvironment( std::string scriptPath, std::string location, Config &config ) {
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
 	this->_addEnv("SCRIPT_NAME", scriptPath);
+	this->_addEnv("PATH", WEB_ROOT + location);
 	this->_addEnv("QUERY_STRING", "");
 
 	//if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();

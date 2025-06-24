@@ -16,7 +16,7 @@ class CGI {
 		std::string execute(const std::string& body);  // Maintenant retourne std::string
 		std::string getOutput() const;  // Getter pour la sortie
 		char **formatEnvironment();
-		void setEnvironment(std::string scriptPath, Config &config);
+		void setEnvironment( std::string scriptPath, std::string location, Config &config );
 		void _addEnv(std::string index, std::string value);  // Public
 
 	private:
@@ -26,7 +26,7 @@ class CGI {
 		std::map<std::string, std::string> _headers;
 		std::map<std::string, std::string> _env;
 		int _serverPort;  // AJOUT : port du serveur
-		
+
 		char **_envp;
 		bool _envpFormatted;
 
