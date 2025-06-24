@@ -13,6 +13,7 @@ Config::Config(std::string configPath) {
 	root_config.root = "./www";
 	root_config.index.push_back("index.html");
 	root_config.autoindex = false;
+	root_config.listing = false;
 	root_config.client_max_body_size = 1048576;
 	root_config.allowed_methods.push_back("GET");
 	root_config.allowed_methods.push_back("POST");
@@ -76,12 +77,20 @@ bool Config::isLocationMethodsAllowed(std::string path, std::string method) {
 	return (true);
 }
 
+bool Config::listLocation(std::string path) {
+	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
+	if (it != this->_locations.end())
+		return it->second.listing;
+	return (false);
+}
+
 std::vector<std::string> Config::getLocationIndex(std::string path) const {
 	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
 	if (it != this->_locations.end()) {
 		return it->second.index;
 	}
-	throw std::exception();
+	std::vector<std::string> empty;
+	return empty;
 }
 
 std::string Config::getServerInfo() const {
@@ -144,6 +153,7 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 	location.path = path;
 	location.root = "./www";
 	location.autoindex = false;
+	location.listing = false;
 	location.client_max_body_size = 1048576;
 	location.redirect_code = 0;
 
@@ -190,6 +200,10 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 				location.index.push_back("index.htm");
 				location.index.push_back("default_page.html");
 			}
+		}
+		else if (line.find("listing ") == 0) {
+			std::string listingStr = line.substr(8);
+			location.listing = (listingStr == "on");
 		}
 		else if (line.find("client_max_body_size ") == 0) {
 			location.client_max_body_size = atoll(line.substr(21).c_str());

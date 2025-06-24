@@ -7,6 +7,10 @@
 #define SERVER_NAME "webserv"
 #define MIME_TYPES_PATH "./config/mandatory/mime.types"
 #define CODE_STATUS_PATH "./config/mandatory/code.status"
+
+#define DEFAULT_CGI_SCRIPTS "./src/_default/cgi_scripts"
+#define LISTING_CGI "./src/_default/cgi_scripts/listing.py"
+
 #define WEB_ROOT "./www"
 
 typedef struct location_config {
@@ -15,6 +19,7 @@ typedef struct location_config {
 	std::vector<std::string> index;
 	std::vector<std::string> allowed_methods;
 	bool autoindex;
+	bool listing;
 	std::string upload_store;
 	size_t client_max_body_size;
 	std::vector<std::string> cgi_extension;
@@ -35,6 +40,7 @@ public:
 	std::string getStatusCode(const std::string& code);
 	std::string getContentType(const std::string& fileName);
 
+	bool listLocation(std::string path);
 	bool isLocationMethodsAllowed(std::string path, std::string method);
 
 	// CGI methods (dynamiques basées sur la configuration)
