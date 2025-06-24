@@ -77,8 +77,9 @@ void Get::process(Response &response, Request &request) {
 
 bool Get::_handleFileUrl(Request &request, const std::string root) {
 	(void)root;
-	
+
 	std::string path = request.getPath();
+
 	this->_fileName = getLastSub(path, '/');
 
 	if (!fileExists(path)) {
@@ -87,12 +88,23 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 	}
 
 	if (isDirectory(path)) {
-		path += "/index.html";
-		this->_fileName = "index";
-		if (!fileExists(path)) {
-			this->_returnCode = 403;
-			return (false);
+		std::vector<std::string> indexes = this->server_config->getLocationIndex(request.getLocation());
+
+		for (size_t i = 0; i < indexes.size(); i++) {
+			std::string testPath = path + indexes.at(i);
+			if (fileExists(testPath)) {
+				this->_returnCode = 0;
+				this->_fileName = getFileName(indexes.at(i));
+
+				path = testPath;
+				break;
+			}
 		}
+	}
+
+	if (!fileExists(path)) {
+		this->_returnCode = 404;
+		return (false);
 	}
 
 	if (!hasReadPermission(path)) {

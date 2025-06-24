@@ -152,6 +152,7 @@ bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
 std::string Request::getMethod(void) const { return this->_method; }
 std::string Request::getUrl(void) const { return this->_url; }
 std::string Request::getPath(void) const { return this->_path; }
+std::string Request::getLocation(void) const { return this->_location; }
 std::string Request::getBody(void) const { return this->_body; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
 

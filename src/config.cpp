@@ -76,6 +76,14 @@ bool Config::isLocationMethodsAllowed(std::string path, std::string method) {
 	return (true);
 }
 
+std::vector<std::string> Config::getLocationIndex(std::string path) const {
+	std::map<std::string, location_config>::const_iterator it = this->_locations.find(path);
+	if (it != this->_locations.end()) {
+		return it->second.index;
+	}
+	throw std::exception();
+}
+
 std::string Config::getServerInfo() const {
 	std::string main = SERVER_NAME;
 	main += "/";
@@ -176,7 +184,14 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 		else if (line.find("autoindex ") == 0) {
 			std::string autoindexStr = line.substr(10);
 			location.autoindex = (autoindexStr == "on");
-		}		else if (line.find("client_max_body_size ") == 0) {
+			if (location.autoindex) {
+				location.index.clear();
+				location.index.push_back("index.html");
+				location.index.push_back("index.htm");
+				location.index.push_back("default_page.html");
+			}
+		}
+		else if (line.find("client_max_body_size ") == 0) {
 			location.client_max_body_size = atoll(line.substr(21).c_str());
 		}
 		else if (line.find("cgi_extension ") == 0) {

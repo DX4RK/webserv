@@ -16,6 +16,7 @@ public:
 
 	std::string getUrl( void ) const;
 	std::string getPath( void ) const;
+	std::string getLocation( void ) const;
 	std::string getBody( void ) const;
 	std::string getMethod( void ) const;
 	std::string getProtocol( void ) const;
