@@ -206,7 +206,8 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 			location.listing = (listingStr == "on");
 		}
 		else if (line.find("client_max_body_size ") == 0) {
-			location.client_max_body_size = atoll(line.substr(21).c_str());
+			std::istringstream iss(line.substr(21));
+			iss >> location.client_max_body_size;
 		}
 		else if (line.find("cgi_extension ") == 0) {
 			std::string extensionsStr = line.substr(14);
@@ -222,7 +223,8 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 			std::istringstream returnIss(returnStr);
 			std::string codeStr, url;
 			if (returnIss >> codeStr >> url) {
-				location.redirect_code = atoi(codeStr.c_str());
+				std::istringstream codeIss(codeStr);
+				codeIss >> location.redirect_code;
 				location.redirect_url = url;
 			}
 		}
@@ -254,7 +256,9 @@ void Config::_parseServerBlock(const std::string& serverBlock) {
                 portToken.erase(0, portToken.find_first_not_of(" \t"));
                 portToken.erase(portToken.find_last_not_of(" \t") + 1);
 
-                int port = atoi(portToken.c_str());
+                std::istringstream portIss(portToken);
+                int port;
+                portIss >> port;
                 if (port > 0 && port <= 65535) {
                     this->_ports.push_back(port);
                 }
@@ -263,7 +267,9 @@ void Config::_parseServerBlock(const std::string& serverBlock) {
             this->_serverName = line.substr(12);
         }
         else if (line.find("timeout ") == 0) {
-            int timeout = atoi(line.substr(8).c_str());
+            std::istringstream timeoutIss(line.substr(8));
+            int timeout;
+            timeoutIss >> timeout;
             if (timeout > 0) {
                 this->_timeout = timeout;
             }
@@ -305,7 +311,8 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	int start = skip_space(line);
 
 	for (size_t i = (size_t)start; i < line.length(); i++) {
-		if (isspace(line[i]) && isspace(line[i + 1])) {
+		if ((line[i] == ' ' || line[i] == '\t' || line[i] == '\n' || line[i] == '\r' || line[i] == '\f' || line[i] == '\v') && 
+			(line[i + 1] == ' ' || line[i + 1] == '\t' || line[i + 1] == '\n' || line[i + 1] == '\r' || line[i + 1] == '\f' || line[i + 1] == '\v')) {
 			end = (int)i;
 			break;
 		}
@@ -315,7 +322,7 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	line = line.substr(end, line.size() - end);
 
 	for (size_t i = (size_t)start; i < line.length(); i++) {
-		if (!isspace(line[i])) {
+		if (!(line[i] == ' ' || line[i] == '\t' || line[i] == '\n' || line[i] == '\r' || line[i] == '\f' || line[i] == '\v')) {
 			line = line.substr(i, line.size() - (i + 1));
 			break;
 		}
