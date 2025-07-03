@@ -12,7 +12,7 @@ Config::Config(std::string configPath) {
 	root_config.path = "/";
 	root_config.root = "./www";
 	root_config.index.push_back("index.html");
-	root_config.autoindex = false;
+	root_config.autoindex = true;
 	root_config.listing = false;
 	root_config.client_max_body_size = 1048576;
 	root_config.allowed_methods.push_back("GET");
@@ -152,7 +152,7 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 	locationConfig location;
 	location.path = path;
 	location.root = "./www";
-	location.autoindex = false;
+	location.autoindex = true;
 	location.listing = false;
 	location.client_max_body_size = 1048576;
 	location.redirect_code = 0;
@@ -194,12 +194,9 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 		else if (line.find("autoindex ") == 0) {
 			std::string autoindexStr = line.substr(10);
 			location.autoindex = (autoindexStr == "on");
-			if (location.autoindex) {
-				location.index.clear();
-				location.index.push_back("index.html");
-				location.index.push_back("index.htm");
-				location.index.push_back("default_page.html");
-			}
+		}
+		else if (line.find("autoindex ") != 0) {
+			location.autoindex = true;
 		}
 		else if (line.find("listing ") == 0) {
 			std::string listingStr = line.substr(8);
@@ -229,8 +226,17 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 			}
 		}
 	}
+	std::cout << locationLine << std::endl;
+	if (location.autoindex) {
+		std::cout << "yes" << std::endl;
+		location.index.clear();
+		location.index.push_back("index.html");
+		location.index.push_back("index.htm");
+		location.index.push_back("default_page.html");
+	}
 
 	this->_locations[path] = location;
+	std::cout << "------------" << std::endl;
 }
 
 void Config::_parseServerBlock(const std::string& serverBlock) {
@@ -311,7 +317,7 @@ void extractData(std::string line, std::map<std::string, std::string> *map) {
 	int start = skip_space(line);
 
 	for (size_t i = (size_t)start; i < line.length(); i++) {
-		if ((line[i] == ' ' || line[i] == '\t' || line[i] == '\n' || line[i] == '\r' || line[i] == '\f' || line[i] == '\v') && 
+		if ((line[i] == ' ' || line[i] == '\t' || line[i] == '\n' || line[i] == '\r' || line[i] == '\f' || line[i] == '\v') &&
 			(line[i + 1] == ' ' || line[i + 1] == '\t' || line[i + 1] == '\n' || line[i + 1] == '\r' || line[i + 1] == '\f' || line[i + 1] == '\v')) {
 			end = (int)i;
 			break;
