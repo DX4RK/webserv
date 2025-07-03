@@ -10,6 +10,7 @@ Get::Get(Request &request, Config *config) {
 	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation())) {
 		bool canProcess = this->_handleFileUrl(request, root_page);
 		if (!canProcess) { return; }
+		std::cout << this->_filePath.c_str() << std::endl;
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	}
 }
@@ -68,6 +69,7 @@ void Get::process(Response &response, Request &request) {
 	close(this->_fileFd);
 
 	if (bytesRead < 0) {
+		std::cout << "tyufk" << std::endl;
 		this->_returnCode = 500;
 		return;
 	}
@@ -98,11 +100,18 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 
 		for (size_t i = 0; i < indexes.size(); i++) {
 			std::string testPath = path + indexes.at(i);
+
+			if (path.at(path.length() - 1) != '/')
+				testPath = path + '/' + indexes.at(i);
+
+			std::cout << testPath << std::endl;
+
 			if (fileExists(testPath)) {
 				this->_returnCode = 0;
 				this->_fileName = getFileName(indexes.at(i));
 
 				path = testPath;
+				std::cout << testPath << std::endl;
 				break;
 			}
 		}
@@ -145,6 +154,7 @@ void Get::_handleCgiRequest(Request &request) {
 		this->_executeCgiScript(request, scriptPath, postData);
 	} catch (std::exception &e) {
 		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
+		std::cout << "yes" << std::endl;
 		this->_returnCode = 500;
 	}
 }
