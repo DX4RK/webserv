@@ -92,6 +92,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
 
+	// TODO: make this handle special case like trying to fetch style.css on http://localhost:8080/default/index.html, path become /default/index.html/default/style.css
+
 	if (it != this->getHeaders().end()) {
 		std::string referer = extractPath(this->getHeaders()["Referer"]);
 		url = trim(referer, false) + trim(url, false);
