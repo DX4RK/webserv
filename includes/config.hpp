@@ -1,7 +1,6 @@
 #pragma once
 
-#include "_libs.hpp"
-#include "utils.hpp"
+#define WEB_ROOT "./www/"
 
 #define VERSION "1.0"
 #define SERVER_NAME "webserv"
@@ -11,57 +10,79 @@
 #define DEFAULT_CGI_SCRIPTS "./src/_default/cgi_scripts"
 #define LISTING_CGI "./src/_default/cgi_scripts/listing.py"
 
-#define WEB_ROOT "./www"
+#include "utils.hpp"
+
+typedef struct value_config {
+	std::string index;
+	std::vector<std::string> values;
+} value_config;
 
 typedef struct location_config {
-	std::string path;
-	std::string root;
-	std::vector<std::string> index;
-	std::vector<std::string> allowed_methods;
+	int redirect_code;
+
 	bool autoindex;
 	bool listing;
+
+	std::string path;
+	std::string root;
+
 	std::string upload_store;
 	size_t client_max_body_size;
-	std::vector<std::string> cgi_extension;
 	std::string redirect_url;
-	int redirect_code;
+
+	std::vector<std::string> cgi_extension;
+	std::vector<std::string> index;
+	std::vector<std::string> allowed_methods;
 } locationConfig;
 
 class Config {
 public:
-	Config(std::string configPath);
+	Config( std::string fileName );
+	~Config( void );
 
-	// Getters de base
-	std::vector<int> getServerPorts(void) const;
+	std::string parsingMessage;
+
 	int getTimeout(void) const;
-	std::string getServerInfo(void) const;
-	std::string getServerName(void) const;
-	std::string getLocationRoot(std::string path);
-	std::string getStatusCode(const std::string& code);
-	std::string getContentType(const std::string& fileName);
-
 	bool listLocation(std::string path);
-	bool isLocationMethodsAllowed(std::string path, std::string method);
+	bool isCgiPath(std::string path);
+	bool isMethodAllowed(std::string path, std::string method);
 
-	// CGI methods (dynamiques basées sur la configuration)
-	bool isCgiPath(const std::string& path) const;
-	std::string getCgiScriptPath(const std::string& path) const;
-	std::vector<std::string> getLocationIndex(std::string path) const;
-	std::vector<std::string> getCgiExtensions() const;
-	std::string getCgiPath() const;
+	std::string getLocationRoot(std::string path);
+	locationConfig getLocationFromPath(std::string path);
 
-	locationConfig* findLocationForPath(const std::string& path) const;
+	std::string getServerName(void) const;
+	std::string getServerInfo(void) const;
+	std::string getContentType(const std::string& fileName);
+	std::string getStatusCode(const std::string& code);
+	std::string getCgiScriptPath(const std::string& path);
 
+	std::vector<int> getServerPorts(void) const;
+	std::vector<std::string> getCgiExtensions(std::string path);
+	std::vector<std::string> getLocationIndex(std::string path);
 private:
-	std::vector<int> _ports;
-	std::string _serverName;
+
+	std::string _fileBuffer;
+
+	int _serverTimeout;
+
 	int _timeout;
+	size_t _client_max_body_size;
+	std::string _hostName;
+	std::string _serverName;
+
+	std::vector<int> _ports;
+
+	std::vector<std::string> _configLines;
+	std::map<int, std::string> error_pages;
+
 	std::map<std::string, std::string> _mimes;
 	std::map<std::string, std::string> _codeStatus;
-	std::map<std::string, location_config> _locations;
-	void _parseConfigFile(const std::string& configPath);
-	void _parseServerBlock(const std::string& serverBlock);
-	void _parseLocation(const std::string& locationLine, std::istringstream& iss);
-	std::string trim(const std::string& str);
-	Config();
+
+	std::map<std::string, locationConfig> _locations;
+
+	Config( void );
+
+	void _readFile(int fd);
+	void _processParsing(void);
+	void _addValue(value_config *lineData);
 };

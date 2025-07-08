@@ -240,7 +240,6 @@ struct path_parsing parse_path(std::string path) {
 }
 
 std::string findPath(std::string url) {
-	std::cout << url << std::endl;
 	url = url.substr(1, url.length() - 1);
 	std::size_t lastSlash = url.find_last_of('/');
 
