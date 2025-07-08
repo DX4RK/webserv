@@ -108,7 +108,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 	this->_path = path;
 	this->_location = getLocatin(url);
 	std::cout << "Location: " << this->_location << std::endl;
-	if (!this->server_config->isLocationMethodsAllowed(this->_location, method)) {
+	if (!this->server_config->isMethodAllowed(this->_location, method)) {
 		this->_statusCode = 405;
 	std::cout << "----------------" << std::endl;
 

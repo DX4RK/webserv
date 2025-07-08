@@ -21,27 +21,27 @@ void Post::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
 
-		location_config* location = this->server_config->findLocationForPath(url);
-		if (!location) {
-			this->_returnCode = 404;
-			return;
-		}
+		try {
+			location_config location = this->server_config->getLocationFromPath(url);
+			
+			std::string scriptPath = this->server_config->getCgiScriptPath(url);
+			std::string postData = request.getBody();
 
-		std::string scriptPath = this->server_config->getCgiScriptPath(url);
-		std::string postData = request.getBody();
+			if (!fileExists(scriptPath)) {
+				this->_returnCode = 404;
+				return;
+			}
 
-		if (!fileExists(scriptPath)) {
-			this->_returnCode = 404;
-			return;
-		}
+			if (!hasReadPermission(scriptPath)) {
+				this->_returnCode = 403;
+				return;
+			}
 
-		if (!hasReadPermission(scriptPath)) {
-			this->_returnCode = 403;
-			return;
-		}
-
-		this->_executeCgiScript(request, scriptPath, postData);
-
+			this->_executeCgiScript(request, scriptPath, postData);
+			} catch (std::exception &e) {
+				this->_returnCode = 404;
+				return;
+			}
 	} catch (std::exception &e) {
 		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
 		this->_returnCode = 500;
@@ -93,7 +93,7 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 bool Post::_isCgiRequest(Request &request) {
 	std::string url = request.getUrl();
 
-	std::vector<std::string> cgiExtensions = this->server_config->getCgiExtensions();
+	std::vector<std::string> cgiExtensions = this->server_config->getCgiExtensions(url);
 	for (size_t i = 0; i < cgiExtensions.size(); i++) {
 		if (url.find(cgiExtensions[i]) != std::string::npos) {
 			return true;
