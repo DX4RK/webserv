@@ -158,7 +158,15 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 	location.redirect_code = 0;
 
 	std::string line;
+
+	int line_count = 0;
+	int open_braces = 0;
+	int close_braces = 0;
+	bool actual_opened = false;
+
 	while (std::getline(iss, line)) {
+		line_count++;
+
 		size_t commentPos = line.find("//");
 		if (commentPos != std::string::npos) {
 			line = line.substr(0, commentPos);
@@ -169,6 +177,20 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 
 		if (line.empty()) { continue; }
 		if (line == "}") { break; }
+
+		{
+			if ((line.find("{") == 0 && line_count > 1) && (actual_opened == false)) {
+				open_braces++;
+				actual_opened = true;
+			} else
+				std::cout << "parse error 1" << std::endl << line << std::endl << line_count << std::endl;
+
+			if ((line.find("}") == 0) && (actual_opened == true)) {
+				close_braces++;
+				actual_opened = false;
+			} else
+				std::cout << "parse error 2" << line_count << std::endl;
+		}
 
 		if (line.find("root ") == 0) {
 			location.root = line.substr(5);
@@ -226,7 +248,7 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 			}
 		}
 	}
-	std::cout << locationLine << std::endl;
+
 	if (location.autoindex) {
 		std::cout << "yes" << std::endl;
 		location.index.clear();
@@ -235,8 +257,10 @@ void Config::_parseLocation(const std::string& locationLine, std::istringstream&
 		location.index.push_back("default_page.html");
 	}
 
+	if (open_braces != close_braces)
+		std::cout << "error braces" << std::endl;
+
 	this->_locations[path] = location;
-	std::cout << "------------" << std::endl;
 }
 
 void Config::_parseServerBlock(const std::string& serverBlock) {

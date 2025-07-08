@@ -95,8 +95,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 	// TODO: make this handle special case like trying to fetch style.css on http://localhost:8080/default/index.html, path become /default/index.html/default/style.css
 
 	if (it != this->getHeaders().end()) {
-		std::string referer = extractPath(this->getHeaders()["Referer"]);
-		url = trim(referer, false) + trim(url, false);
+		//std::string referer = extractPath(this->getHeaders()["Referer"]);
+		//url = trim(referer, false) + trim(url, false);
 	}
 
 	std::string path = root + url;
