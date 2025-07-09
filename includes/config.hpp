@@ -55,6 +55,7 @@ public:
 	std::string getContentType(const std::string& fileName);
 	std::string getStatusCode(const std::string& code);
 	std::string getCgiScriptPath(const std::string& path);
+	std::string getErrorPath(int errorCode);
 
 	std::vector<int> getServerPorts(void) const;
 	std::vector<std::string> getCgiExtensions(std::string path);
