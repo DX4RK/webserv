@@ -3,6 +3,7 @@
 Get::Get(void) {}
 Get::Get(Request &request, Config *config) {
 	this->_returnCode = 0;
+	this->displayErrorPage = false;
 	this->server_config = config;
 
 	const std::string root_page = this->server_config->getLocationRoot("/");
@@ -10,7 +11,6 @@ Get::Get(Request &request, Config *config) {
 	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation())) {
 		bool canProcess = this->_handleFileUrl(request, root_page);
 		if (!canProcess) { return; }
-		std::cout << this->_filePath.c_str() << std::endl;
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	}
 }
@@ -42,23 +42,25 @@ void Get::process(Response &response, Request &request) {
 	}
 
 	if (this->_isCgiRequest(request)) {
-		std::cout << "hello" << std::endl;
 		this->_handleCgiRequest(request);
 		this->_cgiResponse = true;
+		response.addHeader("Content-Length", ft_itoa(this->_content.size()));
 		return;
 	}
 
-	if (!this->_content.empty() && this->_returnCode == 200) {
-		response.addHeader("Content-Type", "text/html");
-		response.addHeader("Content-Length", ft_itoa(this->_content.length()));
+	if (this->_returnCode != 0) {
+		std::string fileExtension = getFileExtension(request.getOriginalUrl());
+		std::cout << "zati" << std::endl;
+		std::cout << fileExtension << std::endl;
+		if (fileExtension != "") {
+			try {
+				request.findHeader("Referer");
+			} catch (std::exception &e) {
+				this->displayErrorPage = true;
+			}
+		}
 		return;
 	}
-
-	if (this->_returnCode == 404 && (getLastSub(this->_fileName, '.') == this->_fileName || this->_fileName.find(".html"))) {
-		this->_fileName = "404";
-		this->_filePath = "./src/_default/errors/404.html";
-		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
-	} else if (this->_returnCode != 0) { return; }
 
 	char buffer[4096];
 	ssize_t bytesRead;
@@ -70,7 +72,6 @@ void Get::process(Response &response, Request &request) {
 	close(this->_fileFd);
 
 	if (bytesRead < 0) {
-		std::cout << "tyufk" << std::endl;
 		this->_returnCode = 500;
 		return;
 	}
@@ -93,6 +94,9 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 
 	if (!fileExists(path)) {
 		this->_returnCode = 404;
+		std::string fileExtension = getFileExtension(request.getOriginalUrl());
+		if (fileExtension == "")
+			this->displayErrorPage = true;
 		return (false);
 	}
 
@@ -105,20 +109,23 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 			if (path.at(path.length() - 1) != '/')
 				testPath = path + '/' + indexes.at(i);
 
-			std::cout << testPath << std::endl;
-
 			if (fileExists(testPath)) {
 				this->_returnCode = 0;
 				this->_fileName = getFileName(indexes.at(i));
 
 				path = testPath;
-				std::cout << testPath << std::endl;
+				std::cout << "NOOOOOOOO" << std::endl;
+				this->displayErrorPage = false;
 				break;
+			} else {
+				std::cout << "eee" << std::endl;
+				this->displayErrorPage = true;
 			}
 		}
 	}
 
 	if (!fileExists(path)) {
+		std::cout << "supposed" << std::endl;
 		this->_returnCode = 404;
 		return (false);
 	}
@@ -155,7 +162,6 @@ void Get::_handleCgiRequest(Request &request) {
 		this->_executeCgiScript(request, scriptPath, postData);
 	} catch (std::exception &e) {
 		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
-		std::cout << "yes" << std::endl;
 		this->_returnCode = 500;
 	}
 }

@@ -4,6 +4,7 @@
 Put::Put(void) {}
 Put::Put(Request &request, Config *config) {
 	this->_returnCode = 0;
+	this->displayErrorPage = false;
 	this->server_config = config;
 
 	const std::string root_page = this->server_config->getLocationRoot("/");
