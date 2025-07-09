@@ -351,8 +351,12 @@ bool Config::isMethodAllowed(std::string path, std::string method) {
 	}
 }
 
-bool Config::listLocation(std::string path) {
+bool Config::listLocation(std::string path, std::string url) {
 	try {
+		size_t dotPos = url.find_last_of('.');
+		if (dotPos != std::string::npos)
+			return false;
+
 		locationConfig config = this->getLocationFromPath(path);
 		return config.listing;
 

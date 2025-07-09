@@ -43,7 +43,7 @@ public:
 	std::string parsingMessage;
 
 	int getTimeout(void) const;
-	bool listLocation(std::string path);
+	bool listLocation(std::string path, std::string url);
 	bool isCgiPath(std::string path);
 	bool isMethodAllowed(std::string path, std::string method);
 
