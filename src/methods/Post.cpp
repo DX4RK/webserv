@@ -3,6 +3,7 @@
 Post::Post(void) {}
 Post::Post(Request &request, Config *config) {
 	this->_returnCode = 0;
+	this->displayErrorPage = false;
 	this->server_config = config;
 
 	if (this->_isCgiRequest(request)) {

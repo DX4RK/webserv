@@ -3,6 +3,7 @@
 Delete::Delete(void) {}
 Delete::Delete(Request &request, Config *config) {
 	this->_returnCode = 0;
+	this->displayErrorPage = false;
 	this->server_config = config;
 	const std::string root_page = this->server_config->getLocationRoot("/");
 	if (this->_handleFileUrl(request, root_page)) return;
