@@ -129,6 +129,18 @@ void addLocation(location_config *location, value_config *lineData) {
 std::map<int, std::string> createErrorPages(std::vector<std::string> lines, size_t start, size_t end) {
 	std::map<int, std::string> main;
 
+	main[200] = "./src/_default/errors/200.html";
+	main[201] = "./src/_default/errors/201.html";
+	main[204] = "./src/_default/errors/204.html";
+	main[302] = "./src/_default/errors/302.html";
+	main[400] = "./src/_default/errors/400.html";
+	main[403] = "./src/_default/errors/403.html";
+	main[404] = "./src/_default/errors/404.html";
+	main[405] = "./src/_default/errors/405.html";
+	main[411] = "./src/_default/errors/411.html";
+	main[413] = "./src/_default/errors/413.html";
+	main[500] = "./src/_default/errors/500.html";
+
 	for (size_t index = start; index < end; index++) {
 		std::string line = trimStart(lines.at(index));
 		try {
@@ -415,6 +427,13 @@ std::vector<std::string> Config::getCgiExtensions(std::string path) {
 	}
 }
 
+std::string Config::getErrorPath(int errorCode) {
+	std::map<int, std::string>::iterator it = this->error_pages.find(errorCode);
+	if (it != this->error_pages.end()) {
+		return it->second;	}
+	return "";
+}
+
 /* MAIN */
 
 Config::Config(void) {}
@@ -537,6 +556,18 @@ Config::Config(std::string fileName) {
 	this->_serverName = "localhost";
 	this->_timeout = 60;
 	this->_client_max_body_size = 1048576;
+
+	this->error_pages[200] = "./src/_default/errors/200.html";
+	this->error_pages[201] = "./src/_default/errors/201.html";
+	this->error_pages[204] = "./src/_default/errors/204.html";
+	this->error_pages[302] = "./src/_default/errors/302.html";
+	this->error_pages[400] = "./src/_default/errors/400.html";
+	this->error_pages[403] = "./src/_default/errors/403.html";
+	this->error_pages[404] = "./src/_default/errors/404.html";
+	this->error_pages[405] = "./src/_default/errors/405.html";
+	this->error_pages[411] = "./src/_default/errors/411.html";
+	this->error_pages[413] = "./src/_default/errors/413.html";
+	this->error_pages[500] = "./src/_default/errors/500.html";
 
 	try {
 		this->_processParsing();
