@@ -24,12 +24,9 @@ Response::Response(Request &request, Config *config) {
 		methodContent = methodResult.getContent();
 
 		if (methodResult.displayErrorPage) {
-			std::cout << "sus" << std::endl;
 			std::string path = this->server_config->getErrorPath(methodResult.getReturnCode());
-			std::cout << path << std::endl;
 			GetError errorResult = GetError(request, this->server_config, path);
 			errorResult.process(*this, request);
-			std::cout << errorResult.getReturnCode() << std::endl;
 
 			if (errorResult.getReturnCode() == 200) {
 				CGI_response = false;
@@ -44,6 +41,7 @@ Response::Response(Request &request, Config *config) {
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
 
 	if (CGI_response) {
+		std::cout << "cgi ??" << std::endl;
 		size_t contentTypePos = methodContent.find("Content-Type: ");
 		size_t contentTypeEnd = methodContent.find_first_of('\n');
 
