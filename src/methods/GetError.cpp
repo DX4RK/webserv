@@ -2,9 +2,9 @@
 
 GetError::GetError(void) {}
 GetError::GetError(Request &request, Config *config, std::string filePath) {
-	std::cout << "yes" << std::endl;
 	this->_returnCode = 0;
 	this->displayErrorPage = false;
+	this->_cgiResponse = false;
 	this->server_config = config;
 	this->_filePath = filePath;
 
@@ -21,7 +21,6 @@ void GetError::process(Response &response, Request &request) {
 
 	if (this->_returnCode != 0)
 		return;
-	std::cout << "ee" << std::endl;
 	char buffer[4096];
 	ssize_t bytesRead;
 	std::string fileContent;

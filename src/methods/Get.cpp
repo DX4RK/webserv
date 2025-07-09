@@ -4,11 +4,12 @@ Get::Get(void) {}
 Get::Get(Request &request, Config *config) {
 	this->_returnCode = 0;
 	this->displayErrorPage = false;
+	this->_cgiResponse = false;
 	this->server_config = config;
 
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
-	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation())) {
+	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation(), request.getUrl())) {
 		bool canProcess = this->_handleFileUrl(request, root_page);
 		if (!canProcess) { return; }
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
@@ -35,7 +36,7 @@ bool Get::_isCgiRequest(Request &request) {
 void Get::process(Response &response, Request &request) {
 	(void)request;
 
-	if (this->server_config->listLocation(request.getLocation())) {
+	if (this->server_config->listLocation(request.getLocation(), request.getUrl())) {
 		this->_executeCgiScript(request, LISTING_CGI, "");
 		this->_cgiResponse = true;
 		return;
@@ -50,8 +51,6 @@ void Get::process(Response &response, Request &request) {
 
 	if (this->_returnCode != 0) {
 		std::string fileExtension = getFileExtension(request.getOriginalUrl());
-		std::cout << "zati" << std::endl;
-		std::cout << fileExtension << std::endl;
 		if (fileExtension != "") {
 			try {
 				request.findHeader("Referer");
@@ -114,18 +113,15 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 				this->_fileName = getFileName(indexes.at(i));
 
 				path = testPath;
-				std::cout << "NOOOOOOOO" << std::endl;
 				this->displayErrorPage = false;
 				break;
 			} else {
-				std::cout << "eee" << std::endl;
 				this->displayErrorPage = true;
 			}
 		}
 	}
 
 	if (!fileExists(path)) {
-		std::cout << "supposed" << std::endl;
 		this->_returnCode = 404;
 		return (false);
 	}
