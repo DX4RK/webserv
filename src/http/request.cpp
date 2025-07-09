@@ -89,32 +89,25 @@ Request::Request(ListenSocket &listener, Config *config) {
 	// URL HANDLING //
 
 	const std::string root = this->server_config->getLocationRoot("/");
-
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
 
+	this->_originalUrl = url;
 	// TODO: make this handle special case like trying to fetch style.css on http://localhost:8080/default/index.html, path become /default/index.html/default/style.css
 
 	if (it != this->getHeaders().end()) {
-		//std::string referer = extractPath(this->getHeaders()["Referer"]);
-		//url = trim(referer, false) + trim(url, false);
+		std::string referer = extractPath(this->getHeaders()["Referer"]);
+		url = trim(referer, false) + trim(url, false);
 	}
 
 	std::string path = root + url;
 
-	std::cout << "Url: " << url << std::endl;
-	std::cout << "Path: " << path << std::endl;
-
 	this->_url = url;
 	this->_path = path;
 	this->_location = getLocatin(url);
-	std::cout << "Location: " << this->_location << std::endl;
 	if (!this->server_config->isMethodAllowed(this->_location, method)) {
 		this->_statusCode = 405;
-	std::cout << "----------------" << std::endl;
-
 		return;
 	};
-	std::cout << "----------------" << std::endl;
 
 
 	return;
@@ -153,6 +146,7 @@ bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
 
 std::string Request::getMethod(void) const { return this->_method; }
 std::string Request::getUrl(void) const { return this->_url; }
+std::string Request::getOriginalUrl(void) const { return this->_originalUrl; }
 std::string Request::getPath(void) const { return this->_path; }
 std::string Request::getLocation(void) const { return this->_location; }
 std::string Request::getBody(void) const { return this->_body; }

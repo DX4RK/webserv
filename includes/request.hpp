@@ -15,6 +15,7 @@ public:
 	int getStatusCode( void ) const;
 
 	std::string getUrl( void ) const;
+	std::string getOriginalUrl(void) const;
 	std::string getPath( void ) const;
 	std::string getLocation( void ) const;
 	std::string getBody( void ) const;
@@ -32,6 +33,7 @@ private:
 	std::string _url;
 	std::string _path;
 	std::string _location;
+	std::string _originalUrl;
 
 	std::string _refer;
 	std::string _body;
