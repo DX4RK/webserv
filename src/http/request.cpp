@@ -22,6 +22,8 @@ std::string getLocatin(std::string url) {
 Request::Request(void) {}
 Request::Request(ListenSocket &listener, Config *config) {
 
+	std::cout << LIGHT_BLUE << BOLD << "==============[webserv]==============" << RESET << std::endl;
+
 	// INIT //
 
 	this->_body = "";
@@ -91,12 +93,40 @@ Request::Request(ListenSocket &listener, Config *config) {
 	const std::string root = this->server_config->getLocationRoot("/");
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
 
-	this->_originalUrl = url;
 	// TODO: make this handle special case like trying to fetch style.css on http://localhost:8080/default/index.html, path become /default/index.html/default/style.css
 
+	std::cout << "FileName: " << getFullFilename(url) << std::endl;
+
+	this->_originalUrl = url;
+	if ((getFullFilename(url) == url) && (url.at(url.length() - 1) == '/')) {
+		url = url.substr(0, url.length() - 1);
+	}
+
 	if (it != this->getHeaders().end()) {
+		std::string fileName = getFullFilename(url);
 		std::string referer = extractPath(this->getHeaders()["Referer"]);
-		url = trim(referer, false) + trim(url, false);
+		std::string absoluteReference = extractPathNoName(referer);
+		std::cout << "Bobby: " << std::count(referer.begin(), referer.end(), '.') << std::endl;
+		if (absoluteReference == "" && std::count(referer.begin(), referer.end(), '.') <= 0) {
+			absoluteReference = referer;
+		} else {
+			std::cout << " ree" << std::endl;
+			referer = "";
+		}
+
+		std::cout << "Referer: " << referer << std::endl;
+		std::cout << "Absolute path: " << extractPathNoName(referer) << std::endl;
+
+		//if (absoluteReference == url)
+
+		if (absoluteReference != getPathNoName(url)) {
+				if (url.at(0) == '/')
+				url = url.substr(1);
+	
+			url = trim(absoluteReference, false) + '/' + trim(url, false);
+		}
+
+	
 	}
 
 	std::string path = root + url;
@@ -109,6 +139,12 @@ Request::Request(ListenSocket &listener, Config *config) {
 		return;
 	};
 
+	std::cout << "Url: " << this->_url << std::endl;
+	std::cout << "Original Url: " << this->_originalUrl << std::endl;
+	std::cout << "Path: " << this->_path << std::endl;
+	std::cout << "Location: " << this->_location << std::endl;
+
+	std::cout << std::endl << BOLD << "--------------------------------" << RESET << std::endl << std::endl;
 
 	return;
 }
