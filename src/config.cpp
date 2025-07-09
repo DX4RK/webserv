@@ -290,11 +290,22 @@ std::vector<int> Config::getServerPorts(void) const {
 }
 
 locationConfig Config::getLocationFromPath(std::string path) {
-	std::map<std::string, locationConfig>::const_iterator it = this->_locations.find(path);
-	if (it != this->_locations.end()) {
-		return it->second;
+	std::string bestMatch = "";
+	locationConfig bestLocation;
+
+	for (std::map<std::string, location_config>::const_iterator it = this->_locations.begin();
+		 it != this->_locations.end(); ++it) {
+		const std::string& locationPath = it->first;
+
+		if (path.find(locationPath) == 0) {
+			if (locationPath.length() > bestMatch.length()) {
+				bestMatch = locationPath;
+				bestLocation = it->second;
+			}
+		}
 	}
-	throw std::exception();
+
+	return bestLocation;
 }
 
 std::string Config::getLocationRoot(std::string path) {
