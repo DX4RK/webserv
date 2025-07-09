@@ -254,3 +254,12 @@ std::string getFileName(std::string file_name) {
 		return "";
 	return file_name.substr(0, dot_pos);
 }
+
+
+std::string getFileExtension(std::string fileName) {
+	size_t dot_pos = fileName.find_first_of('.');
+    if (dot_pos == std::string::npos || dot_pos == 0)
+		return "";
+    std::string ext = fileName.substr(dot_pos + 1, fileName.length());
+	return ext;
+}
