@@ -16,28 +16,25 @@ Response::Response(Request &request, Config *config) {
 	this->addHeader("Date", getTime());
 
 	if (this->_responseCode == 0) {
-		// Gestion GitHub login
-		if (request.getUrl() == "/login/github") {
-			this->_responseCode = 302;
-			std::string redirectUrl = "https://github.com/login/oauth/authorize?client_id=Ov23liqR1ibSAhoNpfGM&redirect_uri=http://localhost:8080/github/callback&scope=user";
-			this->addHeader("Location", redirectUrl);
-			methodContent = "";
-		}
-		// Gestion callback GitHub
-		else if (request.getUrl().find("/github/callback") == 0) {
-			this->_handleGithubCallback(request);
-			this->_responseCode = 302;
-			this->addHeader("Location", "/");
-			methodContent = "";
-		}
-		else {
-			Method methodResult = this->_processRequest(request.getMethod(), request);
-			this->_responseCode = methodResult.getReturnCode();
+		Method methodResult = this->_processRequest(request.getMethod(), request);
+		this->_responseCode = methodResult.getReturnCode();
+		if (this->_responseCode == 0) { this->_responseCode = 500; return; }
 
-			if (this->_responseCode == 0) { this->_responseCode = 500; return; }
+		CGI_response = methodResult.isCgiResponse();
+		methodContent = methodResult.getContent();
 
-			CGI_response = methodResult.isCgiResponse();
-			methodContent = methodResult.getContent();
+		if (methodResult.displayErrorPage) {
+			std::cout << "sus" << std::endl;
+			std::string path = this->server_config->getErrorPath(methodResult.getReturnCode());
+			std::cout << path << std::endl;
+			GetError errorResult = GetError(request, this->server_config, path);
+			errorResult.process(*this, request);
+			std::cout << errorResult.getReturnCode() << std::endl;
+
+			if (errorResult.getReturnCode() == 200) {
+				CGI_response = false;
+				methodContent = errorResult.getContent();
+			}
 		}
 	}
 
@@ -45,12 +42,20 @@ Response::Response(Request &request, Config *config) {
 	std::string responseMessage = this->server_config->getStatusCode(responseCode);
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
+
 	if (CGI_response) {
-		if (methodContent.find("Content-Type:") == 0 || methodContent.find("Content-type:") == 0)
-			this->_response += this->_headers + methodContent;
-	} else {
-		this->_response += this->_headers + "\n" + methodContent;
+		size_t contentTypePos = methodContent.find("Content-Type: ");
+		size_t contentTypeEnd = methodContent.find_first_of('\n');
+
+		if (contentTypePos != std::string::npos) {
+			this->addHeader("Content-Type", methodContent.substr(contentTypePos + 14, contentTypeEnd - 1));
+			methodContent = methodContent.substr(contentTypeEnd, methodContent.length());
+		} else {
+			this->addHeader("Content-Type", "application/json");
+		}
 	}
+
+	this->_response += this->_headers + "\n" + methodContent;
 }
 
 Response::~Response( void ) {
