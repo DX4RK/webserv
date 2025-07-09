@@ -107,8 +107,9 @@ void ListenSocket::handler() {
 		if (status_code >= 300) { status_color = LIGHT_CYAN; }
 		if (status_code >= 400) { status_color = RED; }
 
+		std::cout << "Status code: " << status_code << std::endl;
 		//std::cout << "Received " << BOLD << LIGHT_PURPLE << req.getMethod() << RESET << " code: " << status_code << " url: " << req.getUrl() << std::endl;
-		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " treated request " << LIGHT_ORANGE << BOLD << status_code << RESET << DIM << " " << req.getUrl() << RESET << std::endl;
+		//std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " treated request " << LIGHT_ORANGE << BOLD << status_code << RESET << DIM << " " << req.getUrl() << RESET << std::endl;
 	}
 
 }
