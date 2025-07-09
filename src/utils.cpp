@@ -248,6 +248,35 @@ std::string findPath(std::string url) {
 	return url.substr(0, lastSlash);
 }
 
+std::string getFullFilename(std::string url) {
+	size_t slash_pos = url.find_last_of('/');
+	if (slash_pos == std::string::npos)
+		return url;
+	std::string ext = url.substr(slash_pos + 1, url.length());
+	return ext;
+}
+
+std::string extractPathNoName(const std::string& url) {
+	std::size_t protocolPos = url.find("://");
+	std::size_t startOfPath;
+    std::string newUrl;
+
+	if (protocolPos != std::string::npos)
+		startOfPath = url.find("/", protocolPos + 3);
+	else
+		startOfPath = url.find("/");
+
+	if (startOfPath == std::string::npos)
+        return url;
+
+    newUrl = url.substr(startOfPath);
+    size_t slash_pos = newUrl.find_last_of('/');
+	if (slash_pos == std::string::npos)
+		return newUrl;
+
+	return newUrl.substr(0, slash_pos);
+}
+
 std::string getFileName(std::string file_name) {
 	std::size_t dot_pos = file_name.find_first_of(".");
 	if (dot_pos == std::string::npos || dot_pos == 0)
@@ -255,6 +284,13 @@ std::string getFileName(std::string file_name) {
 	return file_name.substr(0, dot_pos);
 }
 
+std::string getPathNoName(std::string url) {
+	size_t slash_pos = url.find_last_of('/');
+	if (slash_pos == std::string::npos)
+		return url;
+	std::string ext = url.substr(0, slash_pos);
+	return ext;
+}
 
 std::string getFileExtension(std::string fileName) {
 	size_t dot_pos = fileName.find_first_of('.');
