@@ -42,10 +42,13 @@ std::string ft_upper(std::string str);
 std::string findPath(std::string url);
 std::string extractPath(const std::string& url);
 std::string getFileModifiedTime(std::string path);
+std::string getPathNoName(std::string url);
+std::string extractPathNoName(const std::string& url);
 std::vector<std::string> getLines(std::string buffer);
 std::vector<std::string> splitString(std::string str);
 std::string getLastSub(const std::string& src, char c);
 std::string getFileName(std::string file_name);
+std::string getFullFilename(std::string url);
 std::string getFileExtension(std::string fileName);
 std::string trim(const std::string& str, bool except_newline);
 /*std::string getContentType(const std::string& file_path);*/
