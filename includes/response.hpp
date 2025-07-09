@@ -7,6 +7,7 @@
 #include "Get.hpp"
 #include "Delete.hpp"
 #include "Post.hpp"
+#include "GetError.hpp"
 #include "utils.hpp"
 #include "CGI.hpp"  // AJOUT
 
