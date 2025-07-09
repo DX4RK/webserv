@@ -15,6 +15,8 @@ public:
 	int getReturnCode( void );
 	std::string getContent( void );
 	bool isCgiResponse( void );
+
+	bool displayErrorPage;
 protected:
 	int _returnCode;
 	bool _cgiResponse;
