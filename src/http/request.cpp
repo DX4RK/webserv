@@ -137,8 +137,14 @@ Request::Request(ListenSocket &listener, Config *config) {
 		return;
 	};
 
+	std::cout << "Redirect: " << this->server_config->getRedirectPath(this->_location) << std::endl;
 	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
 		this->_statusCode = 413;
+		return;
+	}
+
+	if (this->server_config->getRedirectPath(this->_location).length() > 0) {
+		this->_statusCode = 308;
 		return;
 	}
 
