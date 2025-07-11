@@ -107,7 +107,9 @@ size_t getBlockEnd(std::vector<std::string> lines, size_t start) {
 }
 
 void addLocation(location_config *location, value_config *lineData) {
+	std::cout << lineData->index << std::endl;
 	if (lineData->index == "return" && lineData->values.size() == 1) {
+		std::cout << "yeuywgfeyugfiqw" << std::endl;
 		location->redirect_url = lineData->values.at(0);
 	} else if (lineData->index == "root" && lineData->values.size() == 1) {
 		location->root = lineData->values.at(0);
@@ -165,6 +167,7 @@ location_config createLocation(std::vector<std::string> lines, size_t start, siz
 	location.listing = false;
 	location.path = "/";
 	location.root = "./www";
+	location.redirect_url = "";
 	location.client_max_body_size = -1;
 
 	for (size_t index = start; index < end; index++) {
@@ -416,6 +419,15 @@ std::string Config::getCgiScriptPath(const std::string& path) {
 		scriptPath += relativePath;
 
 		return scriptPath;
+	} catch (std::exception &e) {
+		return "";
+	}
+}
+
+std::string Config::getRedirectPath(const std::string& path) {
+	try {
+		locationConfig config = this->getLocationFromPath(path);
+		return config.redirect_url;
 	} catch (std::exception &e) {
 		return "";
 	}

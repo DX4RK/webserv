@@ -3,6 +3,7 @@ status {
     Created                                   201;
     No Content                                204;
     Found                                     302;
+    Permanent Redirect                        308;
     Bad Request                               400;
     Forbidden                                 403;
     Not Found                                 404;
