@@ -33,6 +33,16 @@ Response::Response(Request &request, Config *config) {
 				methodContent = errorResult.getContent();
 			}
 		}
+	} else {
+		std::cout << " hello " << std::endl;
+		std::string path = this->server_config->getErrorPath(this->_responseCode);
+		GetError errorResult = GetError(request, this->server_config, path);
+		errorResult.process(*this, request);
+		std::cout << errorResult.getReturnCode() << std::endl;
+		if (errorResult.getReturnCode() == 200) {
+			CGI_response = false;
+			methodContent = errorResult.getContent();
+		}
 	}
 
 	std::string responseCode = ft_itoa(this->_responseCode);
@@ -41,7 +51,7 @@ Response::Response(Request &request, Config *config) {
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
 
 	if (CGI_response) {
-		std::cout << "cgi ??" << std::endl;
+		std::cout << "shouldnt be cgi" << std::endl;
 		size_t contentTypePos = methodContent.find("Content-Type: ");
 		size_t contentTypeEnd = methodContent.find_first_of('\n');
 
