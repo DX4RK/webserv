@@ -63,6 +63,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	}
 
+	// BODY //
+
 	size_t body_end = lines.size();
 	if (lines.size() > body_line) {
 		bool isMultipart = false;
@@ -93,8 +95,6 @@ Request::Request(ListenSocket &listener, Config *config) {
 	const std::string root = this->server_config->getLocationRoot("/");
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
 
-	// TODO: make this handle special case like trying to fetch style.css on http://localhost:8080/default/index.html, path become /default/index.html/default/style.css
-
 	std::cout << "FileName: " << getFullFilename(url) << std::endl;
 
 	this->_originalUrl = url;
@@ -122,11 +122,9 @@ Request::Request(ListenSocket &listener, Config *config) {
 		if (absoluteReference != getPathNoName(url)) {
 				if (url.at(0) == '/')
 				url = url.substr(1);
-	
+
 			url = trim(absoluteReference, false) + '/' + trim(url, false);
 		}
-
-	
 	}
 
 	std::string path = root + url;
@@ -138,6 +136,11 @@ Request::Request(ListenSocket &listener, Config *config) {
 		this->_statusCode = 405;
 		return;
 	};
+
+	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
+		this->_statusCode = 413;
+		return;
+	}
 
 	std::cout << "Url: " << this->_url << std::endl;
 	std::cout << "Original Url: " << this->_originalUrl << std::endl;
