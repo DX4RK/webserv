@@ -108,9 +108,9 @@ size_t getBlockEnd(std::vector<std::string> lines, size_t start) {
 
 void addLocation(location_config *location, value_config *lineData) {
 	std::cout << lineData->index << std::endl;
-	if (lineData->index == "return" && lineData->values.size() == 1) {
-		std::cout << "yeuywgfeyugfiqw" << std::endl;
-		location->redirect_url = lineData->values.at(0);
+	if ((lineData->index == "return" && lineData->values.size() == 2) && is_digits(lineData->values.at(0))) {
+		location->redirect_code = ft_atoi(lineData->values.at(0));
+		location->redirect_url = lineData->values.at(1);
 	} else if (lineData->index == "root" && lineData->values.size() == 1) {
 		location->root = lineData->values.at(0);
 	} else if (lineData->index == "autoindex" && lineData->values.size() == 1) {
