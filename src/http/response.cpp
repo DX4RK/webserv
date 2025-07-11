@@ -33,7 +33,7 @@ Response::Response(Request &request, Config *config) {
 				methodContent = errorResult.getContent();
 			}
 		}
-	} else if (this->_responseCode == 308) {
+	} else if (this->_responseCode >= 300 && 400 > this->_responseCode) {
 		this->addHeader("Location", this->server_config->getRedirectPath(request.getLocation()));
 	} else {
 		std::string path = this->server_config->getErrorPath(this->_responseCode);
