@@ -328,7 +328,7 @@ std::string Config::getLocationRoot(std::string path) {
 		locationConfig config = this->getLocationFromPath(path);
 		return config.root;
 	} catch (std::exception &e) {
-		return WEB_ROOT;
+		throw std::exception();
 	}
 }
 

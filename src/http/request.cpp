@@ -92,10 +92,10 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	// URL HANDLING //
 
-	const std::string root = this->server_config->getLocationRoot("/");
+	std::string locationStr = getLocatin(url);
+	//locationConfig location =  this->server_config->getLocationFromPath(locationStr);
+	//const std::string root = this->server_config->getLocationRoot(locationStr);
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
-
-	std::cout << "FileName: " << getFullFilename(url) << std::endl;
 
 	this->_originalUrl = url;
 	if ((getFullFilename(url) == url) && (url.at(url.length() - 1) == '/')) {
@@ -127,11 +127,22 @@ Request::Request(ListenSocket &listener, Config *config) {
 		}
 	}
 
-	std::string path = root + url;
+	std::string path;
+
+	try {
+		const std::string root = this->server_config->getLocationRoot(locationStr);
+		std::string fileName = getFullFilename(url);
+		if (root == "/")
+			path = WEB_ROOT + url;
+		else
+			path = root + fileName;
+	} catch (std::exception &e) {
+		path = WEB_ROOT + url;
+	}
 
 	this->_url = url;
 	this->_path = path;
-	this->_location = getLocatin(url);
+	this->_location = locationStr;
 	if (!this->server_config->isMethodAllowed(this->_location, method)) {
 		this->_statusCode = 405;
 		return;
@@ -152,6 +163,8 @@ Request::Request(ListenSocket &listener, Config *config) {
 	std::cout << "Original Url: " << this->_originalUrl << std::endl;
 	std::cout << "Path: " << this->_path << std::endl;
 	std::cout << "Location: " << this->_location << std::endl;
+
+	std::cout << "Location Tests: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
 
 	std::cout << std::endl << BOLD << "--------------------------------" << RESET << std::endl << std::endl;
 
