@@ -107,7 +107,6 @@ size_t getBlockEnd(std::vector<std::string> lines, size_t start) {
 }
 
 void addLocation(location_config *location, value_config *lineData) {
-	std::cout << lineData->index << std::endl;
 	if ((lineData->index == "return" && lineData->values.size() == 2) && is_digits(lineData->values.at(0))) {
 		location->redirect_code = ft_atoi(lineData->values.at(0));
 		location->redirect_url = lineData->values.at(1);
@@ -501,7 +500,6 @@ void Config::_processParsing(void) {
 				this->_locations[location.path] = location;
 				//this->_locations.push_back(location);
 
-				std::cout << "------------------" << std::endl;
 				index = end;
 			} catch (std::exception &e) {
 				this->parsingMessage = "Location is not closed at line " + static_cast<int>(index);

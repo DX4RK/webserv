@@ -256,6 +256,16 @@ std::string getFullFilename(std::string url) {
 	return ext;
 }
 
+std::string getFullFilenameV2(std::string url) {
+	size_t slash_pos = url.find_last_of('/');
+	if (slash_pos == std::string::npos)
+		return "";
+	std::string ext = url.substr(slash_pos + 1, url.length());
+	if (url.find('.') == std::string::npos)
+		return "";
+	return ext;
+}
+
 std::string extractPathNoName(const std::string& url) {
 	std::size_t protocolPos = url.find("://");
 	std::size_t startOfPath;
@@ -298,4 +308,13 @@ std::string getFileExtension(std::string fileName) {
 		return "";
     std::string ext = fileName.substr(dot_pos + 1, fileName.length());
 	return ext;
+}
+
+
+std::string getWithoutSlashes(std::string url) {
+	if (url.at(0) == '/')
+		url = url.substr(1);
+	if (url.length() > 1 && (url.at(url.length() - 1) == '/'))
+		url = url.substr(0, url.length() - 1);
+	return url;
 }

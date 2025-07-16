@@ -45,7 +45,6 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
-
 	if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
 
 	//if (!this->server_config->isLocationMethodsAllowed(findPath(this->_url), method)) {
@@ -92,83 +91,78 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	// URL HANDLING //
 
-	std::string locationStr = getLocatin(url);
-	//locationConfig location =  this->server_config->getLocationFromPath(locationStr);
-	//const std::string root = this->server_config->getLocationRoot(locationStr);
-	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("Referer");
+	bool rootUrl = false;
+	bool isDirectory = false;
 
-	this->_originalUrl = url;
-	if ((getFullFilename(url) == url) && (url.at(url.length() - 1) == '/')) {
-		url = url.substr(0, url.length() - 1);
+	std::string root;
+	std::string fileName;
+	std::string location;
+	std::string formatUrl = url;
+	std::string originalUrl = url;
+
+	formatUrl = getWithoutSlashes(url);
+	if (formatUrl == "") {
+		formatUrl = "/";
+		rootUrl = true;
 	}
 
-	if (it != this->getHeaders().end()) {
-		std::string fileName = getFullFilename(url);
-		std::string referer = extractPath(this->getHeaders()["Referer"]);
-		std::string absoluteReference = extractPathNoName(referer);
-		std::cout << "Bobby: " << std::count(referer.begin(), referer.end(), '.') << std::endl;
-		if (absoluteReference == "" && std::count(referer.begin(), referer.end(), '.') <= 0) {
-			absoluteReference = referer;
+	size_t dot_pos = formatUrl.find('.');
+	size_t lastSlash = formatUrl.find_last_of('/');
+
+	if ((dot_pos != std::string::npos) && dot_pos > lastSlash) {
+		isDirectory = false;
+		if (lastSlash != std::string::npos) {
+			location = formatUrl.substr(0, lastSlash);
+			fileName = formatUrl.substr(lastSlash + 1, formatUrl.length());
 		} else {
-			std::cout << " ree" << std::endl;
-			referer = "";
+			location = "";
+			fileName = formatUrl;
 		}
-
-		std::cout << "Referer: " << referer << std::endl;
-		std::cout << "Absolute path: " << extractPathNoName(referer) << std::endl;
-
-		//if (absoluteReference == url)
-
-		if (absoluteReference != getPathNoName(url)) {
-				if (url.at(0) == '/')
-				url = url.substr(1);
-
-			url = trim(absoluteReference, false) + '/' + trim(url, false);
+	} else {
+		if ((dot_pos != std::string::npos) && (lastSlash == std::string::npos)) {
+			location = "";
+			fileName = formatUrl;
+		} else {
+			isDirectory = true;
+			location = formatUrl;
+			fileName = "";
 		}
 	}
-
-	std::string path;
-
+	if (isDirectory)
+		std::cout << "is a directory" << std::endl;
+	else
+		std::cout << "is not a directory" << std::endl;
 	try {
-		const std::string root = this->server_config->getLocationRoot(locationStr);
-		std::string fileName = getFullFilename(url);
-		if (root == "/")
-			path = WEB_ROOT + url;
-		else
-			path = root + fileName;
+		root = this->server_config->getLocationRoot(location);
+		root = getWithoutSlashes(root);
 	} catch (std::exception &e) {
-		path = WEB_ROOT + url;
+		root = this->server_config->getLocationRoot("/");
 	}
 
-	this->_url = url;
-	this->_path = path;
-	this->_location = locationStr;
-	if (!this->server_config->isMethodAllowed(this->_location, method)) {
-		this->_statusCode = 405;
-		return;
-	};
+	(void)rootUrl;
+	(void)isDirectory;
 
-	std::cout << "Redirect: " << this->server_config->getRedirectPath(this->_location) << std::endl;
-	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
-		this->_statusCode = 413;
-		return;
-	}
+	if (!location.empty())
+		location = "/" + location;
+	//this->_statusCode = 500;
 
-	if (this->server_config->getRedirectPath(this->_location).length() > 0) {
-		this->_statusCode = 308;
-		return;
-	}
+	this->_url = formatUrl;
+	this->_path = root + location + "/" + fileName;
+	this->_location = location;
+	this->_originalUrl = originalUrl;
 
+	// Logging
 	std::cout << "Url: " << this->_url << std::endl;
 	std::cout << "Original Url: " << this->_originalUrl << std::endl;
+	std::cout << "Root: " << root << std::endl;
 	std::cout << "Path: " << this->_path << std::endl;
 	std::cout << "Location: " << this->_location << std::endl;
-
-	std::cout << "Location Tests: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
-
+	std::cout << "File Name: " << fileName << std::endl;
+	std::cout << "Location Config Path: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
 	std::cout << std::endl << BOLD << "--------------------------------" << RESET << std::endl << std::endl;
 
 	return;
+
 }
 
 bool Request::_formatHeader(const std::string &headerLine) {
