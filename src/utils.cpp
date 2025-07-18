@@ -269,7 +269,7 @@ std::string getFullFilenameV2(std::string url) {
 std::string extractPathNoName(const std::string& url) {
 	std::size_t protocolPos = url.find("://");
 	std::size_t startOfPath;
-    std::string newUrl;
+	std::string newUrl;
 
 	if (protocolPos != std::string::npos)
 		startOfPath = url.find("/", protocolPos + 3);
@@ -277,10 +277,10 @@ std::string extractPathNoName(const std::string& url) {
 		startOfPath = url.find("/");
 
 	if (startOfPath == std::string::npos)
-        return url;
+		return url;
 
-    newUrl = url.substr(startOfPath);
-    size_t slash_pos = newUrl.find_last_of('/');
+	newUrl = url.substr(startOfPath);
+	size_t slash_pos = newUrl.find_last_of('/');
 	if (slash_pos == std::string::npos)
 		return newUrl;
 
