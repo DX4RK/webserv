@@ -92,11 +92,13 @@ Request::Request(ListenSocket &listener, Config *config) {
 	// URL HANDLING //
 
 	bool rootUrl = false;
-	bool isDirectory = false;
+	bool directory = false;
 
 	std::string root;
 	std::string fileName;
 	std::string location;
+	std::string referer;
+	std::string originalLocation;
 	std::string formatUrl = url;
 	std::string originalUrl = url;
 
@@ -110,7 +112,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 	size_t lastSlash = formatUrl.find_last_of('/');
 
 	if ((dot_pos != std::string::npos) && dot_pos > lastSlash) {
-		isDirectory = false;
+		directory = false;
 		if (lastSlash != std::string::npos) {
 			location = formatUrl.substr(0, lastSlash);
 			fileName = formatUrl.substr(lastSlash + 1, formatUrl.length());
@@ -123,15 +125,12 @@ Request::Request(ListenSocket &listener, Config *config) {
 			location = "";
 			fileName = formatUrl;
 		} else {
-			isDirectory = true;
+			directory = true;
 			location = formatUrl;
 			fileName = "";
 		}
 	}
-	if (isDirectory)
-		std::cout << "is a directory" << std::endl;
-	else
-		std::cout << "is not a directory" << std::endl;
+
 	try {
 		root = this->server_config->getLocationRoot(location);
 		root = getWithoutSlashes(root);
@@ -139,11 +138,36 @@ Request::Request(ListenSocket &listener, Config *config) {
 		root = this->server_config->getLocationRoot("/");
 	}
 
+	std::string path;
+
+	originalLocation = location;
+	if (!location.empty())
+		location = "/" + location;
+
+	try {
+		referer = trim(this->findHeader("Referer"), false);
+		referer = extractPath(referer);
+
+		std::string testPath = root + referer + location;
+		if (isDirectory(testPath)) {
+			size_t firstSlashPos = referer.find_first_of('/');
+			if (firstSlashPos != std::string::npos)
+				referer = referer.substr(firstSlashPos + 1);
+			if (referer.length() > 0) {
+				size_t findReferer = originalLocation.find(referer);
+				if (findReferer == std::string::npos) {
+					location = referer + originalLocation;
+				}
+			}
+		}
+	} catch (std::exception &e) {}
+
 	(void)rootUrl;
-	(void)isDirectory;
+	(void)directory;
 
 	if (!location.empty())
 		location = "/" + location;
+
 	//this->_statusCode = 500;
 
 	this->_url = formatUrl;
