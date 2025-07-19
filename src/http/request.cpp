@@ -134,14 +134,24 @@ Request::Request(ListenSocket &listener, Config *config) {
 	try {
 		root = this->server_config->getLocationRoot(location);
 		root = getWithoutSlashes(root);
+
+		size_t lastSlash = root.find_last_of('/');
+		size_t slashCount = std::count(root.begin(), root.end(), '/');
+
+		if (lastSlash != std::string::npos) {
+			if (slashCount > 1) {
+				location = root.substr(lastSlash, root.length());
+				root = root.substr(0, lastSlash);
+			}
+		} else
+			throw std::exception();
 	} catch (std::exception &e) {
 		root = this->server_config->getLocationRoot("/");
 	}
 
 	std::string path;
-
 	originalLocation = location;
-	if (!location.empty())
+	if (!location.empty() && location.at(0) != '/')
 		location = "/" + location;
 
 	try {
@@ -165,7 +175,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 	(void)rootUrl;
 	(void)directory;
 
-	if (!location.empty())
+	if (!location.empty() && location.at(0) != '/')
 		location = "/" + location;
 
 	//this->_statusCode = 500;
@@ -182,7 +192,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 	std::cout << "Path: " << this->_path << std::endl;
 	std::cout << "Location: " << this->_location << std::endl;
 	std::cout << "File Name: " << fileName << std::endl;
-	std::cout << "Location Config Path: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
+	//std::cout << "Location Config Path: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
 	std::cout << std::endl << BOLD << "--------------------------------" << RESET << std::endl << std::endl;
 
 	return;
