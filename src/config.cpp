@@ -307,6 +307,10 @@ locationConfig Config::getLocationFromPath(std::string path) {
 	std::string bestMatch = "";
 	locationConfig bestLocation;
 
+	if (path.at(0) != '/') {
+		path = "/" + path;
+	}
+
 	for (std::map<std::string, location_config>::const_iterator it = this->_locations.begin();
 		 it != this->_locations.end(); ++it) {
 		const std::string& locationPath = it->first;
