@@ -16,6 +16,17 @@ Response::Response(Request &request, Config *config) {
 	this->addHeader("Date", getTime());
 
 	if (this->_responseCode == 0) {
+		location_config loc = config->getLocationFromPath(request.getLocation());
+	if (loc.redirect_code != 0) {
+	this->_responseCode = loc.redirect_code;
+	this->addHeader("Location", loc.redirect_url);
+	this->_response = request.getProtocol() + " " +
+		ft_itoa(this->_responseCode) + " " +
+		this->server_config->getStatusCode(ft_itoa(this->_responseCode)) + "\n";
+	this->_response += this->_headers + "\n";
+	return;
+	}
+
 		Method methodResult = this->_processRequest(request.getMethod(), request);
 		this->_responseCode = methodResult.getReturnCode();
 		if (this->_responseCode == 0) { this->_responseCode = 500; return; }

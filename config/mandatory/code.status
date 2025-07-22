@@ -2,6 +2,7 @@ status {
     OK                                        200;
     Created                                   201;
     No Content                                204;
+	Moved Permanently						  301;
     Found                                     302;
     Permanent Redirect                        308;
     Bad Request                               400;
