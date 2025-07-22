@@ -25,8 +25,9 @@ void Post::_handleCgiRequest(Request &request) {
 
 		try {
 			location_config location = this->server_config->getLocationFromPath(url);
-			
-			std::string scriptPath = this->server_config->getCgiScriptPath(url);
+
+			std::string scriptPath = request.getPath();
+			//std::string scriptPath = this->server_config->getCgiScriptPath(url);
 			std::string postData = request.getBody();
 
 			if (!fileExists(scriptPath)) {
@@ -151,7 +152,8 @@ void Post::process(Response &response, Request &request) {
 
 	if (request.isCgiEnabled()) {
 		std::string url = request.getUrl();
-		std::string scriptPath = this->server_config->getCgiScriptPath(url);
+		std::string scriptPath = request.getPath();
+		//std::string scriptPath = this->server_config->getCgiScriptPath(url);
 
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
 		cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
