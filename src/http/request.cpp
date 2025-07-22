@@ -185,6 +185,17 @@ Request::Request(ListenSocket &listener, Config *config) {
 	this->_location = location;
 	this->_originalUrl = originalUrl;
 
+	// check
+
+	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
+		this->_statusCode = 413;
+		return;
+	}
+
+	if (!this->server_config->isMethodAllowed(this->_location, method)) {
+		this->_statusCode = 405;
+		return;
+	}
 	// Logging
 	std::cout << "Url: " << this->_url << std::endl;
 	std::cout << "Original Url: " << this->_originalUrl << std::endl;
