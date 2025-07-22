@@ -30,11 +30,13 @@ void Delete::process(Response &response, Request &request) {
 }
 
 bool Delete::_handleFileUrl(Request &request, const std::string root) {
-	const std::string &filePath = request.getUrl();
-	std::string fullPath = root + filePath;
+	(void)root;
 
-	this->_fileName = getLastSub(fullPath, '/');
-	T_PATH_PARSING path_permissions = parse_path(fullPath);
+	std::string path = request.getPath();
+
+	this->_fileName = getLastSub(path, '/');
+
+	T_PATH_PARSING path_permissions = parse_path(path);
 
 	if (!path_permissions.exist) {
 		this->_returnCode = 404;
@@ -43,6 +45,6 @@ bool Delete::_handleFileUrl(Request &request, const std::string root) {
 		this->_returnCode = 403;
 	}
 
-	this->_filePath = fullPath;
+	this->_filePath = path;
 	return (true);
 }
