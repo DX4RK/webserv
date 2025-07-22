@@ -138,7 +138,8 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 void Get::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
-		std::string scriptPath = this->server_config->getCgiScriptPath(url);
+		std::string scriptPath = request.getPath();
+		//std::string scriptPath = this->server_config->getCgiScriptPath(url);
 		if (scriptPath.empty()) {
 			this->_returnCode = 404;
 			return;
