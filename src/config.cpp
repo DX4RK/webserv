@@ -312,7 +312,7 @@ locationConfig Config::getLocationFromPath(std::string path) {
 
 	if (path.empty())
 		path = "/";
-	
+
 	if (path.at(0) != '/') {
 		path = "/" + path;
 	}
@@ -363,10 +363,12 @@ bool Config::isMethodAllowed(std::string path, std::string method) {
 	}
 }
 
-bool Config::listLocation(std::string path, std::string url) {
+bool Config::listLocation(std::string path, bool directory) {
 	try {
-		size_t dotPos = url.find_last_of('.');
-		if (dotPos != std::string::npos)
+		//size_t dotPos = url.find_last_of('.');
+		//if (dotPos != std::string::npos)
+		//std::cout << fileName.length() << std::endl;
+		if (!directory)
 			return false;
 
 		locationConfig config = this->getLocationFromPath(path);

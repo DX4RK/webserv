@@ -48,6 +48,7 @@ std::vector<std::string> getLines(std::string buffer);
 std::vector<std::string> splitString(std::string str);
 std::string getLastSub(const std::string& src, char c);
 std::string getFileName(std::string file_name);
+void removeWhitespace(std::string& str);
 std::string getWithoutSlashes(std::string url);
 std::string getFullFilename(std::string url);
 std::string getFullFilenameV2(std::string url);
