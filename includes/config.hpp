@@ -45,7 +45,7 @@ public:
 	int getTimeout(void) const;
 	int getReturnCode(std::string path);
 
-	bool listLocation(std::string path, std::string url);
+	bool listLocation(std::string path, bool directory);
 	bool isCgiPath(std::string path);
 	bool isMethodAllowed(std::string path, std::string method);
 
