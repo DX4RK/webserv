@@ -21,17 +21,21 @@ public:
 	std::string getBody( void ) const;
 	std::string getMethod( void ) const;
 	std::string getProtocol( void ) const;
+	std::string getFileName( void ) const;
 
 	bool isCgiEnabled( void ) const;
+	bool isReqDirectory( void ) const;
 	std::string findHeader( std::string index );
 
 	std::map<std::string, std::string> getHeaders( void ) const;
 private:
 	int	_statusCode;
 	bool _cgiEnabled;
+	bool _isDirectory;
 
 	std::string _url;
 	std::string _path;
+	std::string _fileName;
 	std::string _location;
 	std::string _originalUrl;
 
