@@ -59,6 +59,7 @@ public:
 	std::string getCgiScriptPath(const std::string& path);
 	std::string getRedirectPath(const std::string& path);
 	std::string getErrorPath(int errorCode);
+	std::string getUploadStore(const std::string& path);
 
 	std::vector<int> getServerPorts(void) const;
 	std::vector<std::string> getCgiExtensions(std::string path);
