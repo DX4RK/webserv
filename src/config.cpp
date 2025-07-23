@@ -124,6 +124,8 @@ void addLocation(location_config *location, value_config *lineData) {
 		location->index = lineData->values;
 	} else if (lineData->index == "allowed_methods") {
 		location->allowed_methods = lineData->values;
+	} else if (lineData->index == "upload_store" && lineData->values.size() == 1) {
+		location->upload_store = lineData->values.at(0);
 	}
 }
 
@@ -166,6 +168,7 @@ location_config createLocation(std::vector<std::string> lines, size_t start, siz
 	location.listing = false;
 	location.path = "/";
 	location.root = "./www";
+	location.upload_store = "./upload";
 	location.redirect_url = "";
 	location.client_max_body_size = -1;
 
@@ -608,4 +611,16 @@ Config::Config(std::string fileName) {
 	setDataFromFile(MIME_TYPES_PATH, &this->_mimes);
 	setDataFromFile(CODE_STATUS_PATH, &this->_codeStatus);
 
+}
+
+std::string Config::getUploadStore(const std::string& path) {
+	std::cout << "CALLED" << std::endl;
+	std::cout << "path: " << path << std::endl;
+    try {
+        locationConfig config = this->getLocationFromPath(path);
+        return config.upload_store;
+    } catch (std::exception &e) {
+		std::cout << "exception " << path << std::endl;
+        return "./upload";
+    }
 }

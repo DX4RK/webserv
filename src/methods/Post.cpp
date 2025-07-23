@@ -70,6 +70,10 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	CGI cgi_handler("POST", request.getProtocol(), cgiHeaders, 8080);
 	cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+	
+	std::string uploadDir = this->server_config->getUploadStore(request.getLocation());
+	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
+
 	cgi_handler.formatEnvironment();
 	std::string cgiOutput = cgi_handler.execute(postData);
 

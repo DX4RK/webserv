@@ -33,7 +33,7 @@ try:
     
     file_data = data[binary_start:binary_end]
     
-    upload_dir = os.path.join(os.path.dirname(__file__), 'files_uploaded_by_users')
+    upload_dir = os.environ.get('UPLOAD_DIR')
     os.makedirs(upload_dir, exist_ok=True)
     
     file_path = os.path.join(upload_dir, filename)
