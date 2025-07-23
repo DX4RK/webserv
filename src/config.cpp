@@ -310,6 +310,9 @@ locationConfig Config::getLocationFromPath(std::string path) {
 	std::string bestMatch = "";
 	locationConfig bestLocation;
 
+	if (path.empty())
+		path = "/";
+	
 	if (path.at(0) != '/') {
 		path = "/" + path;
 	}
