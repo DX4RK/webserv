@@ -178,16 +178,43 @@ Request::Request(ListenSocket &listener, Config *config) {
 	if (!location.empty() && location.at(0) != '/')
 		location = "/" + location;
 
+	if (fileName.empty() && lastSlash != std::string::npos) {
+		std::string mainPath = root + location + "/" + fileName;
+			std::cout << "here" << std::endl;
+
+		if (mainPath.at(mainPath.length() - 1) == '/') {
+			mainPath = mainPath.substr(0, mainPath.length() - 1);
+		}
+
+		if (!isDirectory(mainPath)) {
+			directory = false;
+			size_t mainLastSlash = mainPath.find_last_of("/");
+			std::cout << "here" << std::endl;
+			if (mainLastSlash < mainPath.length()) {
+				fileName = mainPath.substr(mainLastSlash + 1);
+			}
+			std::cout << location << std::endl;
+			std::cout << "yessss" << std::endl;
+			size_t locationLastSlash = location.find_last_of("/");
+			if (locationLastSlash < location.length()) {
+				location = location.substr(0, locationLastSlash);
+			}
+		}
+
+		
+	}
+
 	//this->_statusCode = 500;
 
 	this->_url = formatUrl;
+	this->_fileName = fileName;
+	this->_isDirectory = directory;
 	this->_path = root + location + "/" + fileName;
 	this->_location = location;
 	this->_originalUrl = originalUrl;
 
 	// check
 
-	
 	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
 		this->_statusCode = 413;
 		return;
@@ -241,12 +268,14 @@ bool Request::_formatHeader(const std::string &headerLine) {
 
 int Request::getStatusCode(void) const { return this->_statusCode; }
 bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
+bool Request::isReqDirectory( void ) const { return this->_isDirectory; }
 
 std::string Request::getMethod(void) const { return this->_method; }
 std::string Request::getUrl(void) const { return this->_url; }
 std::string Request::getOriginalUrl(void) const { return this->_originalUrl; }
 std::string Request::getPath(void) const { return this->_path; }
 std::string Request::getLocation(void) const { return this->_location; }
+std::string Request::getFileName(void) const { return this->_fileName; }
 std::string Request::getBody(void) const { return this->_body; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
 

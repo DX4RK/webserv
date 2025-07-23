@@ -9,7 +9,7 @@ Get::Get(Request &request, Config *config) {
 
 	const std::string root_page = this->server_config->getLocationRoot("/");
 
-	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation(), request.getUrl())) {
+	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation(), request.isReqDirectory())) {
 		bool canProcess = this->_handleFileUrl(request, root_page);
 		if (!canProcess) { return; }
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
@@ -36,7 +36,7 @@ bool Get::_isCgiRequest(Request &request) {
 void Get::process(Response &response, Request &request) {
 	(void)request;
 
-	if (this->server_config->listLocation(request.getLocation(), request.getUrl())) {
+	if (this->server_config->listLocation(request.getLocation(), request.isReqDirectory())) {
 		this->_executeCgiScript(request, LISTING_CGI, "");
 		this->_cgiResponse = true;
 		return;
