@@ -16,18 +16,17 @@ void Delete::process(Response &response, Request &request) {
 	(void)request;
 	(void)server_config;
 
-	if (this->_returnCode != 0) return;
+	if (this->_returnCode != 0)
+		return;
 
-	char* const args[] = {
-		const_cast<char*>("/bin/rm/"),
-		const_cast<char*>(this->_filePath.c_str()),
-		NULL
-	};
-
-	execve("/bin/rm", args, NULL);
-	perror("execve");
-	return;
+	if (std::remove(this->_filePath.c_str()) != 0) {
+		perror("remove");
+		this->_returnCode = 500;
+	} else {
+		this->_returnCode = 200;
+	}
 }
+
 
 bool Delete::_handleFileUrl(Request &request, const std::string root) {
 	(void)root;
