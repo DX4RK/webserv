@@ -15,7 +15,7 @@ void Delete::process(Response &response, Request &request) {
 	(void)response;
 	(void)request;
 	(void)server_config;
-
+	//std::cout << "yes" << std::endl;
 	if (this->_returnCode != 0)
 		return;
 
@@ -25,6 +25,7 @@ void Delete::process(Response &response, Request &request) {
 	} else {
 		this->_returnCode = 200;
 	}
+	//std::cout << "re;ove" << std::endl;
 }
 
 
