@@ -1,0 +1,18 @@
+============ CLIENT MAX BODY SIZE ============
+
+Error code should be: 413 (Payload Too Large)
+curl -X POST -d "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnop12345678910_:EOEBDJEJASSNEOSALUT____B" http://localhost:8080/post_body
+
+============ DELETE METHOD ============
+
+Error code should be: 404 (Not Found)
+curl -X DELETE http://localhost:8080/trash/salut.txt
+
+Error code should be: 200 (Success)
+curl -X DELETE http://localhost:8080/trash/test.txt
+
+============ LOCATION ALLOW METHOD ============
+
+Error code should be: 405 (Method Not Allowed)
+curl -X GET http://localhost:8080/post_body/salut.txt
+
