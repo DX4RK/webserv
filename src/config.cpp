@@ -367,7 +367,6 @@ bool Config::listLocation(std::string path, bool directory) {
 	try {
 		//size_t dotPos = url.find_last_of('.');
 		//if (dotPos != std::string::npos)
-		//std::cout << fileName.length() << std::endl;
 		if (!directory)
 			return false;
 
@@ -551,12 +550,21 @@ void Config::_readFile(int fd) {
 		throw std::exception();
 	}
 
+	int index = 0;
 	std::string line;
 	std::istringstream iss(this->_fileBuffer);
 	while (std::getline(iss, line)) {
+		index++;
+		if (index < this->_lineStart)
+			continue;
 		size_t commentPos = line.find("//");
 		if (commentPos != std::string::npos)
 			line = line.substr(0, commentPos - 1);
+		if (line == "server {" && this->_configLines.size() > 1) {
+			this->_anotherServer = this->_configLines.size() + 1;
+			this->_configLines.pop_back();
+			break;
+		}
 		this->_configLines.push_back(line);
 	}
 
@@ -571,7 +579,9 @@ void Config::_readFile(int fd) {
 	}
 }
 
-Config::Config(std::string fileName) {
+Config::Config(std::string fileName, int lineStart) {
+	this->_anotherServer = -1;
+	this->_lineStart = lineStart;
 
 	int fd = open(fileName.c_str(), O_RDONLY);
 	if (fd < 0) { return; }
@@ -619,13 +629,10 @@ Config::Config(std::string fileName) {
 }
 
 std::string Config::getUploadStore(const std::string& path) {
-	std::cout << "CALLED" << std::endl;
-	std::cout << "path: " << path << std::endl;
-    try {
-        locationConfig config = this->getLocationFromPath(path);
-        return config.upload_store;
-    } catch (std::exception &e) {
-		std::cout << "exception " << path << std::endl;
-        return "./upload";
-    }
+	try {
+		locationConfig config = this->getLocationFromPath(path);
+		return config.upload_store;
+	} catch (std::exception &e) {
+		return "./upload";
+	}
 }

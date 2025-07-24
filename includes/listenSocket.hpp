@@ -11,10 +11,10 @@
 class ListenSocket {
 public:
 	~ListenSocket( void );
-	ListenSocket( std::vector<BindingSocket*> bindingSockets, Config *config );
+	ListenSocket(std::vector<BindingSocket*> bindingSockets, std::vector<Config*> configs);
 
-	void launch( volatile sig_atomic_t &keepRunning );
-	std::string getBuffer( void ) const;
+	void launch(volatile sig_atomic_t &keepRunning);
+	std::string getBuffer(void) const;
 private:
 	int _newSocket;
 
@@ -25,11 +25,14 @@ private:
 	std::map<int, std::string> _clientBuffers;
 
 	std::vector<BindingSocket*> _sockets;
-	Config *server_config;
+	std::vector<Config*> _configs; // now: one config per socket
 
-	void accepter( void );
-	void handler( void );
-	void responder( void );
+	// Map client fd to config index
+	std::map<int, size_t> _clientFdToConfigIdx;
 
-	ListenSocket( void );
+	void accepter(void);
+	void handler(void);
+	void responder(void);
+
+	ListenSocket(void);
 };

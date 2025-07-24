@@ -39,29 +39,37 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	Config *config = new Config(config_file);
 
-	std::vector<int> ports = config->getServerPorts();
-	std::vector<BindingSocket*> bindingSockets;
+std::vector<Config*> configs;
+std::vector<BindingSocket*> allSockets;
+std::vector<Config*> socketConfigs; // parallel to allSockets
 
-	for (size_t i = 0; i < ports.size(); i++) {
-		BindingSocket* socket = new BindingSocket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config, ports[i]);
-		bindingSockets.push_back(socket);
+
+	int newServerStart = 0;
+	while (newServerStart >= 0) {
+		Config *config = new Config(config_file, newServerStart);
+		newServerStart = config->_anotherServer;
+		configs.push_back(config);
+
+		std::vector<int> ports = config->getServerPorts();
+		for (size_t i = 0; i < ports.size(); i++) {
+			BindingSocket* socket = new BindingSocket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config, ports[i]);
+			allSockets.push_back(socket);
+			socketConfigs.push_back(config); // keep the config for this socket
+		}
 	}
 
 	try {
-		ListenSocket listener(bindingSockets, config);
+		ListenSocket listener(allSockets, socketConfigs);
 		listener.launch(g_keepRunning);
 	} catch (const std::exception &e) {
 		std::cerr << "Fatal error: " << e.what() << std::endl;
 	}
 
-	{
-		for (size_t i = 0; i < bindingSockets.size(); i++)
-			delete bindingSockets[i];
-		bindingSockets.clear();
-	}
+	for (size_t i = 0; i < allSockets.size(); i++)
+		delete allSockets[i];
+	for (size_t i = 0; i < configs.size(); i++)
+		delete configs[i];
 
-	delete config;
 	return 0;
 }
