@@ -6,23 +6,27 @@ ListenSocket::~ListenSocket(void) {
 	this->_sockets.clear();
 }
 
-ListenSocket::ListenSocket(std::vector<BindingSocket*> bindingSockets, Config *config) : _sockets(bindingSockets) {
-	this->server_config = config;
-
-	// Setup listening pour tous les sockets
+ListenSocket::ListenSocket(std::vector<BindingSocket*> bindingSockets, std::vector<Config*> configs)
+	: _sockets(bindingSockets), _configs(configs) {
+	// Setup listening for all sockets
 	for (size_t i = 0; i < this->_sockets.size(); i++) {
 		int sock = this->_sockets[i]->get_sock();
 		if (listen(sock, 10) < 0) {
 			std::cerr << "failed to listen on socket!" << std::endl;
-			exit (EXIT_FAILURE);
+			exit(EXIT_FAILURE);
 		}
 	}
 
-	std::vector<int> ports = config->getServerPorts();
 	std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " listening on ports: " << BOLD;
-	for (size_t i = 0; i < ports.size(); i++) {
-		std::cout << ports[i];
-		if (i < ports.size() - 1) std::cout << ", ";
+	for (size_t i = 0; i < this->_sockets.size(); i++) {
+		if (i < this->_configs.size() && this->_configs[i]) {
+			std::vector<int> ports = this->_configs[i]->getServerPorts();
+			for (size_t j = 0; j < ports.size(); j++) {
+				std::cout << ports[j];
+				if (j < ports.size() - 1) std::cout << ", ";
+			}
+		}
+		if (i < this->_sockets.size() - 1) std::cout << ", ";
 	}
 	std::cout << RESET << std::endl;
 }
@@ -32,21 +36,24 @@ std::string ListenSocket::getBuffer(void) const {
 }
 
 void ListenSocket::accepter(void) {
+	// Accept on all listening sockets, and map new client fd to its config
 	for (size_t i = 0; i < this->_sockets.size(); i++) {
 		int sock = this->_sockets[i]->get_sock();
-
 		for (size_t j = 0; j < this->_pollfds.size(); j++) {
 			if (this->_pollfds[j].fd == sock && (this->_pollfds[j].revents & POLLIN)) {
 				struct sockaddr_in adress = this->_sockets[i]->get_address();
 				int adress_len = sizeof(adress);
-
 				this->_newSocket = accept(sock, (struct sockaddr *)&adress, (socklen_t*)&adress_len);
 				if (this->_newSocket < 0)
 					make_error("failed to accept socket", EXIT_FAILURE);
+				// Map new client fd to config index
+				this->_clientFdToConfigIdx[this->_newSocket] = i;
 				return;
 			}
 		}
 	}
+// Add this to the private section of ListenSocket:
+// std::map<int, size_t> _clientFdToConfigIdx;
 }
 
 void ListenSocket::handler() {
@@ -91,9 +98,21 @@ void ListenSocket::handler() {
 
 	this->_buffer = request;
 
-	Request req(*this, server_config);
-	Response response(req, server_config);
 
+	// Use the config mapped to this client fd
+	Config* config = NULL;
+	std::map<int, size_t>::iterator it = this->_clientFdToConfigIdx.find(this->_newSocket);
+	if (it != this->_clientFdToConfigIdx.end() && it->second < this->_configs.size()) {
+		config = this->_configs[it->second];
+	} else if (!this->_configs.empty()) {
+		config = this->_configs[0];
+	}
+	if (!config) {
+		std::cerr << "[webserv] ERROR: No config found for client fd " << this->_newSocket << std::endl;
+		return;
+	}
+	Request req(*this, config);
+	Response response(req, config);
 	this->response = response.getResponse();
 
 	/* DEBUG */
@@ -117,18 +136,25 @@ void ListenSocket::handler() {
 void ListenSocket::responder(void) {
 	write(this->_newSocket, this->response.c_str(), response.length());
 	close(this->_newSocket);
+	// Remove mapping for this client fd
+	this->_clientFdToConfigIdx.erase(this->_newSocket);
 	this->response = "";
 }
 
 void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
-	std::vector<int> ports = this->server_config->getServerPorts();
 	std::cout << LIGHT_BLUE << BOLD
 	<< "[webserv]" << RESET
 	<< " website is ready, urls: " << GREEN << BOLD;
-
-	for (size_t i = 0; i < ports.size(); i++) {
-		std::cout << "http://" << this->server_config->getServerName() << ":" << ports[i];
-		if (i < ports.size() - 1) std::cout << ", ";
+	for (size_t i = 0; i < this->_sockets.size(); i++) {
+		Config* config = (i < this->_configs.size()) ? this->_configs[i] : NULL;
+		if (config) {
+			std::vector<int> ports = config->getServerPorts();
+			for (size_t j = 0; j < ports.size(); j++) {
+				std::cout << "http://" << config->getServerName() << ":" << ports[j];
+				if (j < ports.size() - 1) std::cout << ", ";
+			}
+			if (i < this->_sockets.size() - 1) std::cout << ", ";
+		}
 	}
 	std::cout << RESET << std::endl << std::endl;
 

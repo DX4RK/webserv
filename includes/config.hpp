@@ -37,13 +37,15 @@ typedef struct location_config {
 
 class Config {
 public:
-	Config( std::string fileName );
+	Config(std::string fileName, int lineStart);
 	~Config( void );
 
 	std::string parsingMessage;
 
 	int getTimeout(void) const;
 	int getReturnCode(std::string path);
+
+	int _anotherServer;
 
 	bool listLocation(std::string path, bool directory);
 	bool isCgiPath(std::string path);
@@ -65,12 +67,13 @@ public:
 	std::vector<std::string> getCgiExtensions(std::string path);
 	std::vector<std::string> getLocationIndex(std::string path);
 private:
-
 	std::string _fileBuffer;
 
+	int _timeout;
 	int _serverTimeout;
 
-	int _timeout;
+	int _lineStart;
+
 	size_t _client_max_body_size;
 	std::string _hostName;
 	std::string _serverName;
