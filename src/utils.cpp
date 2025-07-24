@@ -30,11 +30,18 @@ void make_error(std::string errorMessage, int exitCode) {
 }
 
 std::string getLastSub(const std::string& src, char c) {
-	std::size_t lastSlashPos = src.find_last_of(c);
-	if (lastSlashPos == std::string::npos) {
+	if (src.empty())
+		return "";
+
+	std::size_t lastPos = src.find_last_of(c);
+
+	if (lastPos == std::string::npos)
 		return src;
-	}
-	return src.substr(lastSlashPos + 1);
+
+	if (lastPos + 1 >= src.length())
+		return "";
+
+	return src.substr(lastPos + 1);
 }
 
 // NEW
