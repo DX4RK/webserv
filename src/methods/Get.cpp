@@ -100,6 +100,8 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 	}
 
 	if (isDirectory(path)) {
+		this->_returnCode = 404;
+		this->displayErrorPage = true;
 		std::vector<std::string> indexes = this->server_config->getLocationIndex(request.getLocation());
 
 		for (size_t i = 0; i < indexes.size(); i++) {
@@ -113,10 +115,9 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 				this->_fileName = getFileName(indexes.at(i));
 
 				path = testPath;
+				this->_returnCode = 0;
 				this->displayErrorPage = false;
 				break;
-			} else {
-				this->displayErrorPage = true;
 			}
 		}
 	}
