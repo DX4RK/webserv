@@ -165,7 +165,7 @@ location_config createLocation(std::vector<std::string> lines, size_t start, siz
 
 	location.redirect_code = 0;
 	location.autoindex = true;
-	location.listing = false;
+	location.listing = true;
 	location.path = "/";
 	location.root = "./www";
 	location.upload_store = "./upload";
