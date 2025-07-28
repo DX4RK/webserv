@@ -20,8 +20,8 @@ void Delete::process(Response &response, Request &request) {
 		return;
 
 	if (std::remove(this->_filePath.c_str()) != 0) {
-		perror("remove");
-		this->_returnCode = 500;
+		//perror("remove");
+		this->_returnCode = 501;
 	} else {
 		this->_returnCode = 200;
 	}
