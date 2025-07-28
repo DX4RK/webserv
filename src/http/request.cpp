@@ -201,7 +201,7 @@ Request::Request(ListenSocket &listener, Config *config) {
 			}
 		}
 
-		
+
 	}
 
 	//this->_statusCode = 500;

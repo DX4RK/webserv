@@ -103,10 +103,9 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 		this->_returnCode = 404;
 		this->displayErrorPage = true;
 		std::vector<std::string> indexes = this->server_config->getLocationIndex(request.getLocation());
-
 		for (size_t i = 0; i < indexes.size(); i++) {
 			std::string testPath = path + indexes.at(i);
-
+			std::cout << testPath << std::endl;
 			if (path.at(path.length() - 1) != '/')
 				testPath = path + '/' + indexes.at(i);
 

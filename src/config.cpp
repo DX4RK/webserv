@@ -121,6 +121,7 @@ void addLocation(location_config *location, value_config *lineData) {
 	} else if (lineData->index == "cgi_extension") {
 		location->cgi_extension = lineData->values;
 	} else if (lineData->index == "index") {
+		location->autoindex = false;
 		location->index = lineData->values;
 	} else if (lineData->index == "allowed_methods") {
 		location->allowed_methods = lineData->values;
@@ -165,7 +166,7 @@ location_config createLocation(std::vector<std::string> lines, size_t start, siz
 
 	location.redirect_code = 0;
 	location.autoindex = true;
-	location.listing = true;
+	location.listing = false;
 	location.path = "/";
 	location.root = "./www";
 	location.upload_store = "./upload";
@@ -344,6 +345,7 @@ std::string Config::getLocationRoot(std::string path) {
 std::vector<std::string> Config::getLocationIndex(std::string path) {
 	try {
 		locationConfig config = this->getLocationFromPath(path);
+		std::cout << config.path << std::endl;
 		return config.index;
 	} catch (std::exception &e) {
 		std::vector<std::string> empty;
