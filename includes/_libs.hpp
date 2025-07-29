@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
 
 #include <poll.h>
 #include <stdio.h>

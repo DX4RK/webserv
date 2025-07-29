@@ -1,4 +1,5 @@
 #include "request.hpp"
+#include <filesystem>
 
 /* UTILS */
 
@@ -17,10 +18,38 @@ std::string getLocatin(std::string url) {
 	return (url.substr(firstSlash, lastSlash));
 }
 
+std::string readChunkedBody(const std::vector<std::string>& lines, size_t start) {
+	std::string body = "";
+	size_t i = start;
+	while (i < lines.size()) {
+		std::string line = trim(lines[i++], false);
+		if (line.empty()) continue;
+
+		// Convert chunk size from hex using stringstream
+		std::istringstream iss(line);
+		int chunkSize = 0;
+		iss >> std::hex >> chunkSize;
+		if (chunkSize == 0) break;
+
+		// Read the chunk data (can span multiple lines depending on how you split)
+		if (i >= lines.size()) break;
+
+		// Collect chunkSize bytes (rough version assuming 1 line = 1 chunk)
+		std::string chunkLine = lines[i++];
+		if ((int)chunkLine.size() >= chunkSize)
+			body += chunkLine.substr(0, chunkSize);
+		else
+			body += chunkLine; // fallback
+
+		// After each chunk, there should be a \r\n line separator — skip it if needed
+	}
+	return body;
+}
+
 /* MAIN */
 
 Request::Request(void) {}
-Request::Request(ListenSocket &listener, Config *config) {
+Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 
 	std::cout << LIGHT_BLUE << BOLD << "==============[webserv]==============" << RESET << std::endl;
 
@@ -30,9 +59,14 @@ Request::Request(ListenSocket &listener, Config *config) {
 	this->_statusCode = 0;
 	this->server_config = config;
 
+	if (errorCode != 0) {
+		this->_protocol = "HTTP/1.1";
+		this->_statusCode = errorCode;
+		return;
+	}
+
 	std::string buffer = listener.getBuffer();
 	std::vector<std::string> lines = getLines(buffer);
-
 	std::vector<std::string> words = splitString(lines.at(0));
 
 	if (words.size() < 3)
@@ -64,156 +98,91 @@ Request::Request(ListenSocket &listener, Config *config) {
 
 	// BODY //
 
-	size_t body_end = lines.size();
-	if (lines.size() > body_line) {
-		bool isMultipart = false;
-		std::map<std::string, std::string>::iterator it;
-		for (it = this->_headers.begin(); it != this->_headers.end(); ++it) {
-			if (it->first == "Content-Type" && it->second.find("multipart/") != std::string::npos) {
-				isMultipart = true;
-				break;
+	bool isChunked = false;
+	try {
+		std::string headerValue = trim(this->findHeader("Transfer-Encoding"), false);
+		if (headerValue == "chunked") {
+			isChunked = true;}
+	} catch (std::exception &e) {}
+
+	if (isChunked) {
+		std::cout << "chunked body" << std::endl;
+		this->_body = readChunkedBody(lines, body_line);
+	} else {
+		size_t body_end = lines.size();
+		if (lines.size() > body_line) {
+			bool isMultipart = false;
+			std::map<std::string, std::string>::iterator it;
+			for (it = this->_headers.begin(); it != this->_headers.end(); ++it) {
+				if (it->first == "Content-Type" && it->second.find("multipart/") != std::string::npos) {
+					isMultipart = true;
+					break;
+				}
 			}
-		}
 
-		for (size_t i = body_line; i < body_end; i++) {
-			std::string jump = "\n";
-			std::string line = lines.at(i);
+			for (size_t i = body_line; i < body_end; i++) {
+				std::string jump = "\n";
+				std::string line = lines.at(i);
 
-			if (i + 1 >= body_end) { jump = ""; }
+				if (i + 1 >= body_end) { jump = ""; }
 
-			if (isMultipart) {
-				this->_body += line + jump;
-			} else {
-				this->_body += trim(line, false) + jump;
+				if (isMultipart) {
+					this->_body += line + jump;
+				} else {
+					this->_body += trim(line, false) + jump;
+				}
 			}
 		}
 	}
 
 	// URL HANDLING //
 
-	bool rootUrl = false;
+	std::string location;
+	std::string path;
+	std::string refererUrl;
+
 	bool directory = false;
 
-	std::string root;
-	std::string fileName;
-	std::string location;
-	std::string referer;
-	std::string originalLocation;
-	std::string formatUrl = url;
-	std::string originalUrl = url;
-
-	formatUrl = getWithoutSlashes(url);
-	if (formatUrl == "") {
-		formatUrl = "/";
-		rootUrl = true;
-	}
-
-	size_t dot_pos = formatUrl.find('.');
-	size_t lastSlash = formatUrl.find_last_of('/');
-
-	if ((dot_pos != std::string::npos) && dot_pos > lastSlash) {
-		directory = false;
-		if (lastSlash != std::string::npos) {
-			location = formatUrl.substr(0, lastSlash);
-			fileName = formatUrl.substr(lastSlash + 1, formatUrl.length());
-		} else {
-			location = "";
-			fileName = formatUrl;
-		}
-	} else {
-		if ((dot_pos != std::string::npos) && (lastSlash == std::string::npos)) {
-			location = "";
-			fileName = formatUrl;
-		} else {
-			directory = true;
-			location = formatUrl;
-			fileName = "";
-		}
-	}
+	if (url.at(url.length() - 1) == '/')
+		directory = true;
 
 	try {
-		root = this->server_config->getLocationRoot(location);
-		root = getWithoutSlashes(root);
+		std::string host = this->findHeader("Host");
+		std::string referer = trim(this->findHeader("Referer"), false);
 
-		size_t lastSlash = root.find_last_of('/');
-		size_t slashCount = std::count(root.begin(), root.end(), '/');
-
-		if (lastSlash != std::string::npos) {
-			if (slashCount > 1) {
-				location = root.substr(lastSlash, root.length());
-				root = root.substr(0, lastSlash);
-			}
-		} else
-			throw std::exception();
-	} catch (std::exception &e) {
-		root = this->server_config->getLocationRoot("/");
-	}
-
-	std::string path;
-	originalLocation = location;
-	if (!location.empty() && location.at(0) != '/')
-		location = "/" + location;
-
-	try {
-		referer = trim(this->findHeader("Referer"), false);
 		referer = extractPath(referer);
-
-		std::string testPath = root + referer + location;
-		if (isDirectory(testPath)) {
-			size_t firstSlashPos = referer.find_first_of('/');
-			if (firstSlashPos != std::string::npos)
-				referer = referer.substr(firstSlashPos + 1);
-			if (referer.length() > 0) {
-				size_t findReferer = originalLocation.find(referer);
-				if (findReferer == std::string::npos) {
-					location = referer + originalLocation;
-				}
-			}
-		}
+		if (!(referer.length() == 1 && referer.at(0) == '/'))
+			refererUrl = referer;
 	} catch (std::exception &e) {}
 
-	(void)rootUrl;
-	(void)directory;
-
-	if (!location.empty() && location.at(0) != '/')
-		location = "/" + location;
-
-	if (fileName.empty() && lastSlash != std::string::npos) {
-		std::string mainPath = root + location + "/" + fileName;
-			std::cout << "here" << std::endl;
-
-		if (mainPath.at(mainPath.length() - 1) == '/') {
-			mainPath = mainPath.substr(0, mainPath.length() - 1);
-		}
-
-		if (!isDirectory(mainPath)) {
-			directory = false;
-			size_t mainLastSlash = mainPath.find_last_of("/");
-			std::cout << "here" << std::endl;
-			if (mainLastSlash < mainPath.length()) {
-				fileName = mainPath.substr(mainLastSlash + 1);
-			}
-			std::cout << location << std::endl;
-			std::cout << "yessss" << std::endl;
-			size_t locationLastSlash = location.find_last_of("/");
-			if (locationLastSlash < location.length()) {
-				location = location.substr(0, locationLastSlash);
-			}
-		}
-
-
+	locationConfig locationConfig = this->server_config->getLocationFromPath(url);
+	if (!refererUrl.empty() && isDirectory(locationConfig.root + refererUrl)) {
+		url = refererUrl + url;
+		locationConfig = this->server_config->getLocationFromPath(url);
 	}
 
-	//this->_statusCode = 500;
+	std::string root = locationConfig.root;
 
-	this->_url = formatUrl;
-	this->_fileName = fileName;
-	this->_isDirectory = directory;
-	this->_path = root + location + "/" + fileName;
-	this->_location = location;
-	this->_originalUrl = originalUrl;
+	size_t urlFind = url.find(locationConfig.path);
+	if (urlFind != std::string::npos) {
+		size_t pathLength = locationConfig.path.length();
+		if (pathLength == url.length())
+			url = "";
+		else
+			url = url.substr(pathLength);
+	}
 
-	// check
+	if (url.empty())
+		directory = true;
+	else if (url.at(0) != '/')
+		url = "/" + url;
+
+	path = root + url;
+
+	this->_path = path;
+	this->_location = locationConfig.path;
+
+	// CHECK
 
 	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
 		this->_statusCode = 413;
@@ -224,18 +193,15 @@ Request::Request(ListenSocket &listener, Config *config) {
 		this->_statusCode = 405;
 		return;
 	}
-	// Logging
-	std::cout << "Url: " << this->_url << std::endl;
-	std::cout << "Original Url: " << this->_originalUrl << std::endl;
-	std::cout << "Root: " << root << std::endl;
-	std::cout << "Path: " << this->_path << std::endl;
-	std::cout << "Location: " << this->_location << std::endl;
-	std::cout << "File Name: " << fileName << std::endl;
-	//std::cout << "Location Config Path: " << this->server_config->getLocationFromPath(this->_location).path << std::endl;
-	std::cout << std::endl << BOLD << "--------------------------------" << RESET << std::endl << std::endl;
 
+	// LOG
+
+	std::cout << "Path: " << path << std::endl;
+	std::cout << "Directory: " << directory << std::endl;
+	std::cout << "Location: " << locationConfig.path << std::endl;
+
+	(void)directory;
 	return;
-
 }
 
 bool Request::_formatHeader(const std::string &headerLine) {

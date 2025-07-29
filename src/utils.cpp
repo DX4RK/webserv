@@ -328,4 +328,4 @@ std::string getWithoutSlashes(std::string url) {
 
 void removeWhitespace(std::string& str) {
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
-}   
+}

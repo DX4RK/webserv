@@ -10,7 +10,7 @@ class ListenSocket;
 
 class Request {
 public:
-	Request( ListenSocket &listener, Config *config );
+	Request( ListenSocket &listener, Config *config, int errorCode );
 
 	int getStatusCode( void ) const;
 

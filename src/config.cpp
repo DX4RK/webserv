@@ -310,7 +310,6 @@ std::vector<int> Config::getServerPorts(void) const {
 locationConfig Config::getLocationFromPath(std::string path) {
 	std::string bestMatch = "";
 	locationConfig bestLocation;
-
 	if (path.empty())
 		path = "/";
 
