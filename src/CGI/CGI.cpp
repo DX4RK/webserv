@@ -46,24 +46,22 @@ std::string CGI::execute(const std::string& body) {
 		std::string scriptPath = this->_env["SCRIPT_NAME"];
 		char *arguments[3];
 
-		if (scriptPath.find(".py") != std::string::npos) {
-			arguments[0] = (char *)"/bin/python3";
-			arguments[1] = (char *)scriptPath.c_str();
-			arguments[2] = NULL;
-			execve("/bin/python3", arguments, this->_envp);
+		size_t extPos = scriptPath.find_last_of('.');
+		std::string ext = (extPos != std::string::npos) ? scriptPath.substr(extPos + 1) : "";
+		std::string interpreter;
+
+		if (ext == "py") {
+			interpreter = "/bin/python3";
+		} else if (ext == "sh") {
+			interpreter = "/bin/bash";
+		} else {
+			exit(1); // Extension non supportÃ©e
 		}
-		else if (scriptPath.find(".sh") != std::string::npos) {
-			arguments[0] = (char *)"/bin/bash";
-			arguments[1] = (char *)scriptPath.c_str();
-			arguments[2] = NULL;
-			execve("/bin/bash", arguments, this->_envp);
-		}
-		else {
-			arguments[0] = (char *)"/bin/python3";
-			arguments[1] = (char *)scriptPath.c_str();
-			arguments[2] = NULL;
-			execve("/bin/python3", arguments, this->_envp);
-		}
+
+		arguments[0] = (char *)interpreter.c_str();
+		arguments[1] = (char *)scriptPath.c_str();
+		arguments[2] = NULL;
+		execve(interpreter.c_str(), arguments, this->_envp);
 		exit(1);
 	} else {
 		close(stdin_pipe[0]);
@@ -113,9 +111,10 @@ char **CGI::formatEnvironment() {
 }
 
 void CGI::setEnvironment( std::string scriptPath, std::string location, Config &config ) {
+    (void)location;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
 	this->_addEnv("SCRIPT_NAME", scriptPath);
-	this->_addEnv("PATH", WEB_ROOT + location);
+	this->_addEnv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	this->_addEnv("QUERY_STRING", "");
 
 	//if (!this->_addEnvHeader("CONTENT_TYPE", "Content-Type")) throw std::exception();
