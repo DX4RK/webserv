@@ -82,41 +82,6 @@ Response::~Response( void ) {
 	this->_response = "";
 }
 
-// Fonction pour gérer le callback GitHub
-void Response::_handleGithubCallback(Request &request) {
-	std::string url = request.getUrl();
-	std::string code = "";
-
-	size_t codePos = url.find("code=");
-	if (codePos != std::string::npos) {
-		size_t start = codePos + 5;
-		size_t end = url.find("&", start);
-		if (end == std::string::npos) end = url.length();
-		code = url.substr(start, end - start);
-	}
-
-	if (!code.empty()) {
-		try {
-			std::string postData = "type=github&code=" + code;
-			std::map<std::string, std::string> headers;
-			headers["Content-Type"] = "application/x-www-form-urlencoded";
-			headers["Content-Length"] = ft_itoa(postData.length());
-
-			CGI cgi_handler("POST", "HTTP/1.1", headers, 8080);
-			cgi_handler.setEnvironment("./www/cgi-bin/login.py", request.getLocation(), *this->server_config);
-			cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-			cgi_handler.formatEnvironment();
-			std::string cgi_output = cgi_handler.execute(postData);  // Capturer la sortie
-
-			// todo noldiane : notification sucess login ou failed
-			// JSON {"success": true/false, "login": "username"}
-			// Si login success, ajouter un cookie de session
-		} catch (std::exception &e) {
-			// TODO NOLDIANE: Notification d'erreur general bizarre comme post.cpp
-		}
-	}
-}
-
 Method Response::_processRequest(std::string method, Request &request) {
 	if (method.compare("GET") == 0) {
 		Get methodResult(request, server_config);

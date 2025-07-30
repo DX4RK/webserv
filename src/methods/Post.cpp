@@ -67,10 +67,12 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgiHeaders["Content-Type"] = contentType;
 	cgiHeaders["Content-Length"] = ft_itoa(postData.length());
 
+	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
+
 	CGI cgi_handler("POST", request.getProtocol(), cgiHeaders, 8080);
-	cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
+	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-	
+
 	std::string uploadDir = this->server_config->getUploadStore(request.getLocation());
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
 
@@ -98,16 +100,9 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 }
 
 bool Post::_isCgiRequest(Request &request) {
-	std::string url = request.getUrl();
-
-	std::vector<std::string> cgiExtensions = this->server_config->getCgiExtensions(url);
-	for (size_t i = 0; i < cgiExtensions.size(); i++) {
-		if (url.find(cgiExtensions[i]) != std::string::npos) {
-			return true;
-		}
-	}
-
-	return false;
+		//std::string url = request.getUrl();
+		//return this->server_config->isCgiPath(url);
+	return request.isCgiEnabled();
 }
 
 //  Fonction pour récupérer l'utilisateur de session
@@ -159,8 +154,10 @@ void Post::process(Response &response, Request &request) {
 		std::string scriptPath = request.getPath();
 		//std::string scriptPath = this->server_config->getCgiScriptPath(url);
 
+		std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
+
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
-		cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
+		cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 		cgi_handler.formatEnvironment();
 		this->_content = cgi_handler.execute(request.getBody());
 	}

@@ -79,7 +79,7 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 
 	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
-	if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
+	//if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
 
 	//if (!this->server_config->isLocationMethodsAllowed(findPath(this->_url), method)) {
 	//	this->_statusCode = 405;
@@ -182,6 +182,33 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 	this->_path = path;
 	this->_location = locationConfig.path;
 
+	// CGI CHECK
+
+	this->_cgiEnabled = false;
+	if (!directory && locationConfig.cgi_extension.size() > 0) {
+		std::string fileExtension;
+		size_t dotPosition = path.find_last_of('.');
+		if (dotPosition != std::string::npos)
+			fileExtension = path.substr(dotPosition);
+		std::cout << fileExtension << std::endl;
+		if (!fileExtension.empty()) {
+			for (size_t i = 0; i < locationConfig.cgi_extension.size(); i++) {
+				if (locationConfig.cgi_extension.at(i) == fileExtension) {
+					std::cout << "cgi enabled" << std::endl;
+					this->_cgiEnabled = true;
+					this->_cgiExtension = fileExtension;
+					break;
+				}
+			}
+		}
+	}
+
+	// LOG
+
+	std::cout << "Path: " << path << std::endl;
+	std::cout << "Directory: " << directory << std::endl;
+	std::cout << "Location: " << locationConfig.path << std::endl;
+
 	// CHECK
 
 	if (this->server_config->getLocationFromPath(this->_location).client_max_body_size < this->_body.length()) {
@@ -193,12 +220,6 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 		this->_statusCode = 405;
 		return;
 	}
-
-	// LOG
-
-	std::cout << "Path: " << path << std::endl;
-	std::cout << "Directory: " << directory << std::endl;
-	std::cout << "Location: " << locationConfig.path << std::endl;
 
 	(void)directory;
 	return;
@@ -243,6 +264,7 @@ std::string Request::getPath(void) const { return this->_path; }
 std::string Request::getLocation(void) const { return this->_location; }
 std::string Request::getFileName(void) const { return this->_fileName; }
 std::string Request::getBody(void) const { return this->_body; }
+std::string Request::getCgiExtension( void ) const { return this->_cgiExtension; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
 
 std::map<std::string, std::string> Request::getHeaders(void) const { return this->_headers; }

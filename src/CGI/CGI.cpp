@@ -49,14 +49,18 @@ std::string CGI::execute(const std::string& body) {
 		size_t extPos = scriptPath.find_last_of('.');
 		std::string ext = (extPos != std::string::npos) ? scriptPath.substr(extPos + 1) : "";
 		std::string interpreter;
-
-		if (ext == "py") {
+	std::cout << "world" << std::endl;
+		if (this->_executorPath.empty()) {
+			exit(1);
+		}else
+			interpreter = this->_executorPath;
+		/*if (ext == "py") {
 			interpreter = "/bin/python3";
 		} else if (ext == "sh") {
 			interpreter = "/bin/bash";
 		} else {
 			exit(1); // Extension non supportÃ©e
-		}
+		}*/
 
 		arguments[0] = (char *)interpreter.c_str();
 		arguments[1] = (char *)scriptPath.c_str();
@@ -110,8 +114,8 @@ char **CGI::formatEnvironment() {
 	return envp;
 }
 
-void CGI::setEnvironment( std::string scriptPath, std::string location, Config &config ) {
-    (void)location;
+void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std::string location, Config &config ) {
+	(void)location;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
 	this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
@@ -127,6 +131,8 @@ void CGI::setEnvironment( std::string scriptPath, std::string location, Config &
 	this->_addEnv("GATEWAY_INTERFACE", "CGI/1.1");
 	this->_addEnv("SERVER_NAME", config.getServerName());
 	this->_addEnv("SERVER_PORT", ft_itoa(this->_serverPort));
+
+	this->_executorPath = executorPath;
 }
 
 bool CGI::_addEnvHeader(std::string index, std::string headerIndex) {

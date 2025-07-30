@@ -31,6 +31,7 @@ typedef struct location_config {
 	std::string redirect_url;
 
 	std::vector<std::string> cgi_extension;
+	std::vector<std::string> cgi_path;
 	std::vector<std::string> index;
 	std::vector<std::string> allowed_methods;
 } locationConfig;
@@ -56,6 +57,7 @@ public:
 
 	std::string getServerName(void) const;
 	std::string getServerInfo(void) const;
+	std::string getCGIPath(std::string path, std::string extension);
 	std::string getContentType(const std::string& fileName);
 	std::string getStatusCode(const std::string& code);
 	std::string getCgiScriptPath(const std::string& path);

@@ -20,6 +20,7 @@ public:
 	std::string getLocation( void ) const;
 	std::string getBody( void ) const;
 	std::string getMethod( void ) const;
+	std::string getCgiExtension( void ) const;
 	std::string getProtocol( void ) const;
 	std::string getFileName( void ) const;
 
@@ -37,6 +38,7 @@ private:
 	std::string _path;
 	std::string _fileName;
 	std::string _location;
+	std::string _cgiExtension;
 	std::string _originalUrl;
 
 	std::string _refer;

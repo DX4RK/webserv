@@ -20,8 +20,9 @@ Get::~Get(void) {}
 void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
 	std::map<std::string, std::string> headers;
 
+	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
 	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
-	cgi_handler.setEnvironment(scriptPath, request.getLocation(), *this->server_config);
+	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler.formatEnvironment();
 
 	this->_content = cgi_handler.execute(postData);
@@ -29,8 +30,9 @@ void Get::_executeCgiScript(Request &request, const std::string &scriptPath, con
 }
 
 bool Get::_isCgiRequest(Request &request) {
-	std::string url = request.getUrl();
-	return this->server_config->isCgiPath(url);
+		//std::string url = request.getUrl();
+		//return this->server_config->isCgiPath(url);
+	return request.isCgiEnabled();
 }
 
 void Get::process(Response &response, Request &request) {
@@ -105,7 +107,6 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 		std::vector<std::string> indexes = this->server_config->getLocationIndex(request.getLocation());
 		for (size_t i = 0; i < indexes.size(); i++) {
 			std::string testPath = path + indexes.at(i);
-			std::cout << testPath << std::endl;
 			if (path.at(path.length() - 1) != '/')
 				testPath = path + '/' + indexes.at(i);
 

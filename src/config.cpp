@@ -120,6 +120,8 @@ void addLocation(location_config *location, value_config *lineData) {
 		location->client_max_body_size = ft_atoi(lineData->values.at(0));
 	} else if (lineData->index == "cgi_extension") {
 		location->cgi_extension = lineData->values;
+	} else if (lineData->index == "cgi_path") {
+		location->cgi_path = lineData->values;
 	} else if (lineData->index == "index") {
 		location->autoindex = false;
 		location->index = lineData->values;
@@ -181,6 +183,12 @@ location_config createLocation(std::vector<std::string> lines, size_t start, siz
 		} catch (std::exception &e) {
 			throw std::exception();
 		}
+	}
+
+	size_t cgiExtensionSize = location.cgi_extension.size();
+	size_t cgiPathSize = location.cgi_path.size();
+	if (cgiExtensionSize > cgiPathSize) {
+		location.cgi_extension.erase(location.cgi_extension.begin() + cgiPathSize, location.cgi_extension.end());
 	}
 
 	if (location.autoindex) {
@@ -330,6 +338,23 @@ locationConfig Config::getLocationFromPath(std::string path) {
 	}
 
 	return bestLocation;
+}
+
+std::string Config::getCGIPath(std::string path, std::string extension) {
+	locationConfig config = this->getLocationFromPath(path);
+	std::cout << config.cgi_extension.size() << std::endl;
+	int extensionIndex = -1;
+	for (size_t i = 0; i < config.cgi_extension.size(); i++) {
+		std::cout << "LOL 1: " << config.cgi_extension.at(i) << " LOL 2: " << extension << std::endl;
+		if (config.cgi_extension.at(i) == extension) {
+			extensionIndex = i;
+			break;
+		}
+	}
+	std::cout << extensionIndex << std::endl;
+	if (extensionIndex > -1 && config.cgi_path.size() >= (size_t)extensionIndex)
+		return config.cgi_path.at(extensionIndex);
+	return "";
 }
 
 std::string Config::getLocationRoot(std::string path) {

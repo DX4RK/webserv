@@ -42,8 +42,9 @@ void Put::process(Response &response, Request &request) {
 	}
 
 	if (request.isCgiEnabled()) {
+		std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
 		CGI cgi_handler(request.getMethod(), request.getProtocol(), request.getHeaders(), 8080);
-		cgi_handler.setEnvironment(this->_filePath, request.getLocation(), *this->server_config);
+		cgi_handler.setEnvironment(this->_filePath, executorPath, request.getLocation(), *this->server_config);
 		cgi_handler.formatEnvironment();
 		cgi_handler.execute(request.getBody());
 	}
