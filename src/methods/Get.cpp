@@ -47,7 +47,6 @@ void Get::process(Response &response, Request &request) {
 	if (this->_isCgiRequest(request)) {
 		this->_handleCgiRequest(request);
 		this->_cgiResponse = true;
-		response.addHeader("Content-Length", ft_itoa(this->_content.size()));
 		return;
 	}
 

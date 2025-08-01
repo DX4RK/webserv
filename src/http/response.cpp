@@ -61,17 +61,10 @@ Response::Response(Request &request, Config *config) {
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
 
-	if (CGI_response) {
-		std::cout << "shouldnt be cgi" << std::endl;
-		size_t contentTypePos = methodContent.find("Content-Type: ");
-		size_t contentTypeEnd = methodContent.find_first_of('\n');
-
-		if (contentTypePos != std::string::npos) {
-			this->addHeader("Content-Type", methodContent.substr(contentTypePos + 14, contentTypeEnd - 1));
-			methodContent = methodContent.substr(contentTypeEnd, methodContent.length());
-		} else {
-			this->addHeader("Content-Type", "application/json");
-		}
+	if (CGI_response) 
+	{
+		this->addHeader("Content-type", "text/plain");
+		this->addHeader("Content-Length", ft_itoa(methodContent.size()));
 	}
 
 	this->_response += this->_headers + "\n" + methodContent;

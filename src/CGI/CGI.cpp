@@ -49,7 +49,6 @@ std::string CGI::execute(const std::string& body) {
 		size_t extPos = scriptPath.find_last_of('.');
 		std::string ext = (extPos != std::string::npos) ? scriptPath.substr(extPos + 1) : "";
 		std::string interpreter;
-	std::cout << "world" << std::endl;
 		if (this->_executorPath.empty()) {
 			exit(1);
 		}else
