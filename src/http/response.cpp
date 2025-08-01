@@ -3,7 +3,7 @@
 
 Response::Response(void) {}
 Response::Response(Request &request, Config *config) {
-
+	std::cout << "looooo" << std::endl;
 	this->server_config = config;
 	this->_responseCode = request.getStatusCode();
 

@@ -67,18 +67,20 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgiHeaders["Content-Type"] = contentType;
 	cgiHeaders["Content-Length"] = ft_itoa(postData.length());
 
+	std::cout << "get:" << std::endl;
 	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
-
+	std::cout << "Executor Path: " << executorPath << std::endl;
 	CGI cgi_handler("POST", request.getProtocol(), cgiHeaders, 8080);
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
 
 	std::string uploadDir = this->server_config->getUploadStore(request.getLocation());
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
+	std::cout << "jjiohoh" << std::endl;
 
 	cgi_handler.formatEnvironment();
 	std::string cgiOutput = cgi_handler.execute(postData);
-
+	std::cout << "eeheheh" << std::endl;
 	size_t headerEndPos = cgiOutput.find("\r\n\r\n");
 	if (headerEndPos == std::string::npos) {
 		headerEndPos = cgiOutput.find("\n\n");
@@ -95,8 +97,9 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 		this->_content = cgiOutput;
 	}
 
-	if (scriptPath.find(".py") != std::string::npos)
-		this->_returnCode = 200;
+	//if (scriptPath.find(".py") != std::string::npos)
+	std::cout << "FLLF" << std::endl;
+	this->_returnCode = 200;
 }
 
 bool Post::_isCgiRequest(Request &request) {

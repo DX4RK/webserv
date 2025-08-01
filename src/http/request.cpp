@@ -216,10 +216,18 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 		return;
 	}
 
-	if (!this->server_config->isMethodAllowed(this->_location, method)) {
-		this->_statusCode = 405;
-		return;
+	if (this->_cgiEnabled) {
+		if (!this->server_config->isCgiMethodAllowed(this->_location, method)) {
+			this->_cgiEnabled = false;
+			return;
+		}
+	} else {
+		if (!this->server_config->isMethodAllowed(this->_location, method)) {
+			this->_statusCode = 405;
+			return;
+		}
 	}
+
 
 	(void)directory;
 	return;

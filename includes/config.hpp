@@ -34,6 +34,7 @@ typedef struct location_config {
 	std::vector<std::string> cgi_path;
 	std::vector<std::string> index;
 	std::vector<std::string> allowed_methods;
+	std::vector<std::string> allowed_cgi_methods;
 } locationConfig;
 
 class Config {
@@ -51,6 +52,7 @@ public:
 	bool listLocation(std::string path, bool directory);
 	bool isCgiPath(std::string path);
 	bool isMethodAllowed(std::string path, std::string method);
+	bool isCgiMethodAllowed(std::string path, std::string method);
 
 	std::string getLocationRoot(std::string path);
 	locationConfig getLocationFromPath(std::string path);

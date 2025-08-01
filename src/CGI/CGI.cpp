@@ -19,17 +19,20 @@ CGI::~CGI(void) {
 }
 
 std::string CGI::execute(const std::string& body) {
+	std::cout << "execute" << std::endl;
 	int stdin_pipe[2], stdout_pipe[2];
 	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0) {
 		this->_output = "{\"success\": false, \"error\": \"Pipe creation failed\"}";
 		return this->_output;
 	}
+	std::cout << "execute1" << std::endl;
 
 	pid_t pid = fork();
 	if (pid < 0) {
 		this->_output = "{\"success\": false, \"error\": \"Fork failed\"}";
 		return this->_output;
 	}
+	std::cout << "execute333" << std::endl;
 
 	if (pid == 0) {
 		close(stdin_pipe[1]);
@@ -40,11 +43,13 @@ std::string CGI::execute(const std::string& body) {
 
 		close(stdin_pipe[0]);
 		close(stdout_pipe[1]);
+	std::cout << "execute4444444444" << std::endl;
 
 		this->formatEnvironment();
 
 		std::string scriptPath = this->_env["SCRIPT_NAME"];
 		char *arguments[3];
+	std::cout << "execute55555555" << std::endl;
 
 		size_t extPos = scriptPath.find_last_of('.');
 		std::string ext = (extPos != std::string::npos) ? scriptPath.substr(extPos + 1) : "";
@@ -53,6 +58,8 @@ std::string CGI::execute(const std::string& body) {
 			exit(1);
 		}else
 			interpreter = this->_executorPath;
+	std::cout << "execu666te" << std::endl;
+		
 		/*if (ext == "py") {
 			interpreter = "/bin/python3";
 		} else if (ext == "sh") {
@@ -64,8 +71,9 @@ std::string CGI::execute(const std::string& body) {
 		arguments[0] = (char *)interpreter.c_str();
 		arguments[1] = (char *)scriptPath.c_str();
 		arguments[2] = NULL;
-		execve(interpreter.c_str(), arguments, this->_envp);
-		exit(1);
+		int execReturn = execve(interpreter.c_str(), arguments, this->_envp);
+		std::cout << execReturn << std::endl;
+		//std::exit(1); // Si execve échoue, on quitte le processus enfant
 	} else {
 		close(stdin_pipe[0]);
 		close(stdout_pipe[1]);
@@ -87,7 +95,7 @@ std::string CGI::execute(const std::string& body) {
 		close(stdout_pipe[0]);
 		waitpid(pid, NULL, 0);
 	}
-
+	std::cout << "execute7777777777" << std::endl;
 	return this->_output;
 }
 

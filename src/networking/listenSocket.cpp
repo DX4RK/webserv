@@ -67,22 +67,22 @@ void ListenSocket::handler() {
 	bool isChunked = false;
 
 	int errorCode = 0;
-	int maxTime = 10;
-	double timeCounter = 0;
+	//int maxTime = 10;
+	//double timeCounter = 0;
 
-	clock_t thisTime = clock();
-	clock_t lastTime = thisTime;
+	//clock_t thisTime = clock();
+	//clock_t lastTime = thisTime;
 
 	while (true) {
-		thisTime = clock();
-		timeCounter += (double)(thisTime - lastTime);
-		lastTime = thisTime;
+		//thisTime = clock();
+		//timeCounter += (double)(thisTime - lastTime);
+		//lastTime = thisTime;
 
-		if (timeCounter > (double)(maxTime * CLOCKS_PER_SEC)) {
-			std::cout << "MAX TIME REACHED!" << std::endl;
-			errorCode = 408;
-			break;
-		}
+		//if (timeCounter > (double)(maxTime * CLOCKS_PER_SEC)) {
+		//	std::cout << "MAX TIME REACHED!" << std::endl;
+		//	errorCode = 408;
+		//	break;
+		//}
 
 		bytesRead = recv(this->_newSocket, tempBuffer, sizeof(tempBuffer) - 1, 0);
 		if (bytesRead <= 0)

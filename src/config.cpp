@@ -127,6 +127,8 @@ void addLocation(location_config *location, value_config *lineData) {
 		location->index = lineData->values;
 	} else if (lineData->index == "allowed_methods") {
 		location->allowed_methods = lineData->values;
+	} else if (lineData->index == "cgi_method") {
+		location->allowed_cgi_methods = lineData->values;
 	} else if (lineData->index == "upload_store" && lineData->values.size() == 1) {
 		location->upload_store = lineData->values.at(0);
 	}
@@ -378,15 +380,31 @@ std::vector<std::string> Config::getLocationIndex(std::string path) {
 }
 
 bool Config::isMethodAllowed(std::string path, std::string method) {
-	try {
-		locationConfig config = this->getLocationFromPath(path);
-		int methodsCount = std::count(config.allowed_methods.begin(), config.allowed_methods.end(), method);
-		if (methodsCount > 0)
-			return true;
-		return false;
-	} catch (std::exception &e) {
-		return true;
-	}
+    try {
+         locationConfig config = this->getLocationFromPath(path);
+        for (size_t i = 0; i < config.allowed_methods.size(); i++) {
+            if (config.allowed_methods.at(i) == method) {
+                return true;
+            }
+        }
+        return false;
+    } catch (std::exception &e) {
+        return false;
+    }
+}
+
+bool Config::isCgiMethodAllowed(std::string path, std::string method) {
+    try {
+         locationConfig config = this->getLocationFromPath(path);
+        for (size_t i = 0; i < config.allowed_cgi_methods.size(); i++) {
+            if (config.allowed_cgi_methods.at(i) == method) {
+                return true;
+            }
+        }
+        return false;
+    } catch (std::exception &e) {
+        return false;
+    }
 }
 
 bool Config::listLocation(std::string path, bool directory) {
