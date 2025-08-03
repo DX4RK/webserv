@@ -9,6 +9,7 @@ status {
     Forbidden                                 403;
     Not Found                                 404;
     Method Not Allowed                        405;
+    Not Acceptable                            406;
     Request Timeout                           408;
     Length Required                           411;
     Content Too Large                         413;
