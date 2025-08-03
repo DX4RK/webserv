@@ -6,7 +6,7 @@ ConnectSocket::ConnectSocket(int domain, int type, int protocol, u_long interfac
 	this->_connection = this->connect_network(this->_sock, this->get_address());
 	if (this->_connection < 0) {
 		std::cerr << "failed to ethablish connection." << std::endl;
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("connect failed");
 	}
 }
 
