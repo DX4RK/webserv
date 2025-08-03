@@ -106,7 +106,6 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 	} catch (std::exception &e) {}
 
 	if (isChunked) {
-		std::cout << "chunked body" << std::endl;
 		this->_body = readChunkedBody(lines, body_line);
 	} else {
 		size_t body_end = lines.size();
@@ -190,11 +189,9 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 		size_t dotPosition = path.find_last_of('.');
 		if (dotPosition != std::string::npos)
 			fileExtension = path.substr(dotPosition);
-		std::cout << fileExtension << std::endl;
 		if (!fileExtension.empty()) {
 			for (size_t i = 0; i < locationConfig.cgi_extension.size(); i++) {
 				if (locationConfig.cgi_extension.at(i) == fileExtension) {
-					std::cout << "cgi enabled" << std::endl;
 					this->_cgiEnabled = true;
 					this->_cgiExtension = fileExtension;
 					break;

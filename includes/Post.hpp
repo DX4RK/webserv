@@ -23,11 +23,10 @@ class Post : public Method {
 		std::string _filePath;
 		Config *server_config;
 
-		bool _handleFileUrl( Request &request, const std::string root );
+		void _checkCgiResponse(Response &response);
+		bool _handleFileUrl( Request &request );
 		bool _isCgiRequest(Request &request);
-		void _handleCgiRequest(Request &request);
 		void _executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData);
-		std::string _getSessionUser(Request &request);
 };
 
 #endif

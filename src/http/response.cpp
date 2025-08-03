@@ -3,7 +3,6 @@
 
 Response::Response(void) {}
 Response::Response(Request &request, Config *config) {
-	std::cout << "looooo" << std::endl;
 	this->server_config = config;
 	this->_responseCode = request.getStatusCode();
 
@@ -55,20 +54,20 @@ Response::Response(Request &request, Config *config) {
 			methodContent = errorResult.getContent();
 		}
 	}
-
+	
 	std::string responseCode = ft_itoa(this->_responseCode);
 	std::string responseMessage = this->server_config->getStatusCode(responseCode);
 
 	this->_response = request.getProtocol() + " " + responseCode + " " + responseMessage + "\n";
 
-	if (CGI_response) 
-	{
-		this->addHeader("Content-type", "text/plain");
-		this->addHeader("Content-Length", ft_itoa(methodContent.size()));
-	}
+	(void)CGI_response;
+	//if (CGI_response)
+	//{
+	//	this->addHeader("Content-type", "text/plain");
+	//	this->addHeader("Content-Length", ft_itoa(methodContent.size()));
+	//}
 
 	this->_response += this->_headers + "\n" + methodContent;
-	std::cout << std::endl << this->_response << std::endl;
 }
 
 Response::~Response( void ) {
