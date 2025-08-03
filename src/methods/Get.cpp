@@ -152,7 +152,7 @@ void Get::_executeCgiScript(Request &request, const std::string &scriptPath, con
 	std::map<std::string, std::string> headers;
 
 	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
-	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
+	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, request.getServerPort());
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler.formatEnvironment();
 

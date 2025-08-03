@@ -103,7 +103,7 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	headers["Content-Length"] = ft_itoa(postData.length());
 
 	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
-	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
+	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, request.getServerPort());
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
