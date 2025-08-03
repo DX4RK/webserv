@@ -329,3 +329,10 @@ std::string getWithoutSlashes(std::string url) {
 void removeWhitespace(std::string& str) {
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
 }
+
+int ft_atoi(std::string str) {
+	std::stringstream ss(str);
+	int num;
+	ss >> num;
+	return (num);
+}

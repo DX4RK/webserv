@@ -35,6 +35,7 @@ typedef struct path_parsing {
 	bool full_perms;
 } T_PATH_PARSING;
 
+int ft_atoi(std::string str);
 int skip_space(std::string str);
 
 std::string getTime(void);

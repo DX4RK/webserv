@@ -11,13 +11,6 @@ bool is_digits(const std::string& str) {
 	return !str.empty();
 }
 
-int ft_atoi(std::string str) {
-	std::stringstream ss(str);
-	int num;
-	ss >> num;
-	return (num);
-}
-
 std::vector<std::string> separateString(std::string str) {
 	std::istringstream iss(str);
 	std::vector<std::string> result;
@@ -344,16 +337,13 @@ locationConfig Config::getLocationFromPath(std::string path) {
 
 std::string Config::getCGIPath(std::string path, std::string extension) {
 	locationConfig config = this->getLocationFromPath(path);
-	std::cout << config.cgi_extension.size() << std::endl;
 	int extensionIndex = -1;
 	for (size_t i = 0; i < config.cgi_extension.size(); i++) {
-		std::cout << "LOL 1: " << config.cgi_extension.at(i) << " LOL 2: " << extension << std::endl;
 		if (config.cgi_extension.at(i) == extension) {
 			extensionIndex = i;
 			break;
 		}
 	}
-	std::cout << extensionIndex << std::endl;
 	if (extensionIndex > -1 && config.cgi_path.size() >= (size_t)extensionIndex)
 		return config.cgi_path.at(extensionIndex);
 	return "";
@@ -371,7 +361,6 @@ std::string Config::getLocationRoot(std::string path) {
 std::vector<std::string> Config::getLocationIndex(std::string path) {
 	try {
 		locationConfig config = this->getLocationFromPath(path);
-		std::cout << config.path << std::endl;
 		return config.index;
 	} catch (std::exception &e) {
 		std::vector<std::string> empty;
