@@ -15,17 +15,15 @@ void Delete::process(Response &response, Request &request) {
 	(void)response;
 	(void)request;
 	(void)server_config;
-	//std::cout << "yes" << std::endl;
+
 	if (this->_returnCode != 0)
 		return;
 
 	if (std::remove(this->_filePath.c_str()) != 0) {
-		//perror("remove");
 		this->_returnCode = 501;
 	} else {
 		this->_returnCode = 200;
 	}
-	//std::cout << "re;ove" << std::endl;
 }
 
 
