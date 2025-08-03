@@ -41,6 +41,7 @@ int skip_space(std::string str);
 std::string getTime(void);
 std::string ft_upper(std::string str);
 std::string findPath(std::string url);
+int getCurrentPort(int socket);
 std::string extractPath(const std::string& url);
 std::string getFileModifiedTime(std::string path);
 std::string getPathNoName(std::string url);

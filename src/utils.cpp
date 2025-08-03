@@ -336,3 +336,13 @@ int ft_atoi(std::string str) {
 	ss >> num;
 	return (num);
 }
+
+int getCurrentPort(int socket) {
+	struct sockaddr_in addr;
+	socklen_t addr_len = sizeof(addr);
+	if (getsockname(socket, (struct sockaddr*)&addr, &addr_len) == 0) {
+		int localPort = ntohs(addr.sin_port);
+		return localPort;
+	}
+	return -1;
+}
