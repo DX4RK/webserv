@@ -67,22 +67,15 @@ void ListenSocket::handler() {
 	bool isChunked = false;
 
 	int errorCode = 0;
-	//int maxTime = 10;
-	//double timeCounter = 0;
-
-	//clock_t thisTime = clock();
-	//clock_t lastTime = thisTime;
+	std::time_t start = std::time(0);
 
 	while (true) {
-		//thisTime = clock();
-		//timeCounter += (double)(thisTime - lastTime);
-		//lastTime = thisTime;
-
-		//if (timeCounter > (double)(maxTime * CLOCKS_PER_SEC)) {
-		//	std::cout << "MAX TIME REACHED!" << std::endl;
-		//	errorCode = 408;
-		//	break;
-		//}
+		 std::time_t now = std::time(0);
+		 if (std::difftime(now, start) > 10) {
+				std::cout << "MAX TIME REACHED!" << std::endl;
+				errorCode = 408;
+			break;
+		}
 
 		bytesRead = recv(this->_newSocket, tempBuffer, sizeof(tempBuffer) - 1, 0);
 		if (bytesRead <= 0)
@@ -132,8 +125,6 @@ void ListenSocket::handler() {
 
 	this->_buffer = request;
 
-
-	// Use the config mapped to this client fd
 	Config* config = NULL;
 	std::map<int, size_t>::iterator it = this->_clientFdToConfigIdx.find(this->_newSocket);
 	if (it != this->_clientFdToConfigIdx.end() && it->second < this->_configs.size()) {
@@ -181,6 +172,7 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 	for (size_t i = 0; i < this->_sockets.size(); i++) {
 		Config* config = (i < this->_configs.size()) ? this->_configs[i] : NULL;
 		if (config) {
+			if (i == 1) this->_timeout = config->getTimeout();
 			std::vector<int> ports = config->getServerPorts();
 			for (size_t j = 0; j < ports.size(); j++) {
 				std::cout << "http://" << config->getServerName() << ":" << ports[j];

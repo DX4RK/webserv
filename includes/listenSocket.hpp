@@ -17,6 +17,7 @@ public:
 	int getNewSocket(void) const { return this->_newSocket; }
 	std::string getBuffer(void) const;
 private:
+	int _timeout;
 	int _newSocket;
 
 	std::string _buffer;
