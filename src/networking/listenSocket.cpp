@@ -13,7 +13,7 @@ ListenSocket::ListenSocket(std::vector<BindingSocket*> bindingSockets, std::vect
 		int sock = this->_sockets[i]->get_sock();
 		if (listen(sock, 10) < 0) {
 			std::cerr << "failed to listen on socket!" << std::endl;
-			exit(EXIT_FAILURE);
+			throw std::runtime_error("failed to listen on socket");
 		}
 	}
 
@@ -71,7 +71,7 @@ void ListenSocket::handler() {
 
 	while (true) {
 		 std::time_t now = std::time(0);
-		 if (std::difftime(now, start) > 10) {
+		 if (std::difftime(now, start) > this->_timeout) {
 				std::cout << "MAX TIME REACHED!" << std::endl;
 				errorCode = 408;
 			break;
