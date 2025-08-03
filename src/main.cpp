@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
 	}
 
 
-std::vector<Config*> configs;
-std::vector<BindingSocket*> allSockets;
-std::vector<Config*> socketConfigs; // parallel to allSockets
+	std::vector<Config*> configs;
+	std::vector<BindingSocket*> allSockets;
+	std::vector<Config*> socketConfigs; // parallel to allSockets
 
 
 	int newServerStart = 0;
@@ -51,11 +51,21 @@ std::vector<Config*> socketConfigs; // parallel to allSockets
 		newServerStart = config->_anotherServer;
 		configs.push_back(config);
 
+		size_t i = 0;
 		std::vector<int> ports = config->getServerPorts();
-		for (size_t i = 0; i < ports.size(); i++) {
-			BindingSocket* socket = new BindingSocket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config, ports[i]);
-			allSockets.push_back(socket);
-			socketConfigs.push_back(config); // keep the config for this socket
+		try {
+			for (i = 0; i < ports.size(); i++) {
+				BindingSocket* socket = new BindingSocket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config, ports[i]);
+				allSockets.push_back(socket);
+				socketConfigs.push_back(config); // keep the config for this socket
+			}
+		} catch (std::exception &e) {
+			std::cerr << "Error creating socket for port " << ports[i] << ": " << e.what() << std::endl;
+			for (size_t j = 0; j < allSockets.size(); j++)
+				delete allSockets[j];
+			for (size_t j = 0; j < configs.size(); j++)
+				delete configs[j];
+			return EXIT_FAILURE;
 		}
 	}
 
