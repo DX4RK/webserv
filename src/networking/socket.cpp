@@ -13,13 +13,13 @@ Socket::Socket(int domain, int type, int protocol, u_long interface, Config *con
 
 	if (this->_sock < 0) {
 		std::cerr << "failed to create socket for port " << port << "." << std::endl;
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("socket creation failed");
 	}
 
 	int option = 1;
 	if (setsockopt(this->_sock, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) < 0) {
 		std::cerr << "failed to set socket options for port " << port << "." << std::endl;
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("setsockopt failed");
 	}
 }
 
