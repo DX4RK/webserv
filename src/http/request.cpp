@@ -3,21 +3,6 @@
 
 /* UTILS */
 
-std::string getLocatin(std::string url) {
-	std::size_t firstSlash = url.find_first_of('/');
-	std::size_t lastSlash = url.find_last_of('/');
-
-	if (firstSlash == std::string::npos)
-		return "/";
-	if (lastSlash == std::string::npos || lastSlash == 0) {
-		if (url.size() > 1) {
-			return (url.substr(firstSlash, url.size()));
-		}
-		return "/";
-	}
-	return (url.substr(firstSlash, lastSlash));
-}
-
 std::string readChunkedBody(const std::vector<std::string>& lines, size_t start) {
 	std::string body = "";
 	size_t i = start;
@@ -58,6 +43,7 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 	this->_body = "";
 	this->_statusCode = 0;
 	this->server_config = config;
+	this->_currentPort = getCurrentPort(listener.getNewSocket());
 
 	if (errorCode != 0) {
 		this->_protocol = "HTTP/1.1";
@@ -79,12 +65,6 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 
 	if (methodValid(method)) { this->_method = method; } else { this->_statusCode = 400; return; }
 	if (protocolValid(protocol)) { this->_protocol = protocol; } else { this->_statusCode = 400; return; }
-	//if(this->_url.find("/cgi-bin/") != std::string::npos) { this->_cgiEnabled = true; }
-
-	//if (!this->server_config->isLocationMethodsAllowed(findPath(this->_url), method)) {
-	//	this->_statusCode = 405;
-	//	return;
-	//};
 
 	// HEADERS //
 
@@ -225,7 +205,6 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 		}
 	}
 
-
 	(void)directory;
 	return;
 }
@@ -259,6 +238,7 @@ bool Request::_formatHeader(const std::string &headerLine) {
 // GETTERS
 
 int Request::getStatusCode(void) const { return this->_statusCode; }
+int Request::getServerPort(void) const { return this->_currentPort; }
 bool Request::isCgiEnabled( void ) const { return this->_cgiEnabled; }
 bool Request::isReqDirectory( void ) const { return this->_isDirectory; }
 

@@ -13,6 +13,7 @@ public:
 	Request( ListenSocket &listener, Config *config, int errorCode );
 
 	int getStatusCode( void ) const;
+	int getServerPort( void ) const;
 
 	std::string getUrl( void ) const;
 	std::string getOriginalUrl(void) const;
@@ -30,6 +31,7 @@ public:
 
 	std::map<std::string, std::string> getHeaders( void ) const;
 private:
+	int _currentPort;
 	int	_statusCode;
 	bool _cgiEnabled;
 	bool _isDirectory;

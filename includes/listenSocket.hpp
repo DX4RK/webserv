@@ -14,6 +14,7 @@ public:
 	ListenSocket(std::vector<BindingSocket*> bindingSockets, std::vector<Config*> configs);
 
 	void launch(volatile sig_atomic_t &keepRunning);
+	int getNewSocket(void) const { return this->_newSocket; }
 	std::string getBuffer(void) const;
 private:
 	int _newSocket;
