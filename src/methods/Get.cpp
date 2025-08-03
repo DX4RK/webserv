@@ -7,46 +7,30 @@ Get::Get(Request &request, Config *config) {
 	this->_cgiResponse = false;
 	this->server_config = config;
 
-	const std::string root_page = this->server_config->getLocationRoot("/");
-
 	if (!this->_isCgiRequest(request) && !config->listLocation(request.getLocation(), request.isReqDirectory())) {
-		bool canProcess = this->_handleFileUrl(request, root_page);
+		bool canProcess = this->_handleFileUrl(request);
 		if (!canProcess) { return; }
 		this->_fileFd = open(this->_filePath.c_str(), O_RDONLY);
 	}
 }
 Get::~Get(void) {}
 
-void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
-	std::map<std::string, std::string> headers;
-
-	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
-	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
-	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
-	cgi_handler.formatEnvironment();
-
-	this->_content = cgi_handler.execute(postData);
-	this->_returnCode = 200;
-}
-
 bool Get::_isCgiRequest(Request &request) {
-		//std::string url = request.getUrl();
-		//return this->server_config->isCgiPath(url);
 	return request.isCgiEnabled();
 }
 
 void Get::process(Response &response, Request &request) {
-	(void)request;
-
 	if (this->server_config->listLocation(request.getLocation(), request.isReqDirectory())) {
 		this->_executeCgiScript(request, LISTING_CGI, "");
 		this->_cgiResponse = true;
+		this->_checkCgiResponse(response);
 		return;
 	}
 
 	if (this->_isCgiRequest(request)) {
 		this->_handleCgiRequest(request);
 		this->_cgiResponse = true;
+		this->_checkCgiResponse(response);
 		return;
 	}
 
@@ -85,9 +69,7 @@ void Get::process(Response &response, Request &request) {
 	response.addHeader("Last-Modified", getFileModifiedTime(this->_filePath));
 }
 
-bool Get::_handleFileUrl(Request &request, const std::string root) {
-	(void)root;
-
+bool Get::_handleFileUrl(Request &request) {
 	std::string path = request.getPath();
 
 	this->_fileName = getLastSub(path, '/');
@@ -135,11 +117,64 @@ bool Get::_handleFileUrl(Request &request, const std::string root) {
 	return (true);
 }
 
+void Get::_checkCgiResponse(Response &response) {
+	std::string cgiContent = this->_content;
+	size_t contentTypePos = cgiContent.find("Content-Type: ");
+	size_t contentTypeEnd = cgiContent.find_first_of('\n');
+
+	if (contentTypePos != std::string::npos) {
+		response.addHeader("Content-Type", cgiContent.substr(contentTypePos + 14, contentTypeEnd - 1));
+		cgiContent = cgiContent.substr(contentTypeEnd, cgiContent.length());
+	} else
+		response.addHeader("Content-Type", "application/json");
+
+	size_t statusCodePos = cgiContent.find("Status: ");
+	size_t statusCodeEnd = cgiContent.find_first_of('\n');
+
+	if (statusCodePos != std::string::npos) {
+		this->_returnCode = ft_atoi(cgiContent.substr(statusCodePos + 8, statusCodeEnd - 1));
+		cgiContent = cgiContent.substr(statusCodeEnd, cgiContent.length());
+	} else
+		this->_returnCode = 200;
+
+	size_t contentLengthPos = cgiContent.find("Content-Length: ");
+	size_t contentLengthEnd = cgiContent.find_first_of('\n');
+
+	if (contentLengthPos != std::string::npos) {
+		response.addHeader("Content-Length", cgiContent.substr(contentLengthPos + 16, contentLengthEnd - 1));
+		cgiContent = cgiContent.substr(contentLengthEnd, cgiContent.length());
+	} else
+		response.addHeader("Content-Length", ft_itoa(cgiContent.length()));
+	this->_content = cgiContent;
+}
+
+void Get::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
+	std::map<std::string, std::string> headers;
+
+	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
+	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, 8080);
+	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
+	cgi_handler.formatEnvironment();
+
+	this->_content = cgi_handler.execute(postData);
+	size_t headerEndPos = this->_content.find("\r\n\r\n");
+	if (headerEndPos == std::string::npos) {
+		headerEndPos = this->_content.find("\n\n");
+		if (headerEndPos != std::string::npos) {
+			headerEndPos += 2;
+		}
+	} else
+		headerEndPos += 4;
+
+	if (headerEndPos != std::string::npos)
+		this->_content = this->_content.substr(headerEndPos);
+	this->_returnCode = 200;
+}
+
 void Get::_handleCgiRequest(Request &request) {
 	try {
 		std::string url = request.getUrl();
 		std::string scriptPath = request.getPath();
-		//std::string scriptPath = this->server_config->getCgiScriptPath(url);
 		if (scriptPath.empty()) {
 			this->_returnCode = 404;
 			return;
