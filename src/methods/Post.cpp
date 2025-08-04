@@ -107,10 +107,21 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+	// THIS IS FUCKING STUPID, BUT IT'S HOW IT WORKS WITH TESTER
+	cgi_handler._addEnv("PATH_INFO", request.getPathInfo());
+	cgi_handler._addEnv("SCRIPT_NAME", request.getPathInfo());
+	cgi_handler._addEnv("REQUEST_URI", request.getPathInfo());
 	cgi_handler.formatEnvironment();
 
 
-	this->_content = cgi_handler.execute(postData);
+	try {
+		this->_content = cgi_handler.execute(postData);
+		std::cout << "Content: " << std::endl << this->_content << std::endl;
+	} catch (std::exception &e) {
+		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
+		this->_returnCode = 500;
+		return;
+	}
 
 	size_t headerEndPos = this->_content.find("\r\n\r\n");
 	if (headerEndPos == std::string::npos) {

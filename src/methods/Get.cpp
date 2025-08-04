@@ -154,9 +154,19 @@ void Get::_executeCgiScript(Request &request, const std::string &scriptPath, con
 	std::string executorPath = this->server_config->getCGIPath(request.getLocation(), request.getCgiExtension());
 	CGI cgi_handler(request.getMethod(), request.getProtocol(), headers, request.getServerPort());
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
+	// THIS IS FUCKING STUPID, BUT IT'S HOW IT WORKS WITH TESTER
+	cgi_handler._addEnv("PATH_INFO", request.getPathInfo());
+	cgi_handler._addEnv("SCRIPT_NAME", request.getPathInfo());
+	cgi_handler._addEnv("REQUEST_URI", request.getPathInfo());
 	cgi_handler.formatEnvironment();
 
-	this->_content = cgi_handler.execute(postData);
+	try {
+		this->_content = cgi_handler.execute(postData);
+	} catch (std::exception &e) {
+		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
+		this->_returnCode = 500;
+		return;
+	}
 	size_t headerEndPos = this->_content.find("\r\n\r\n");
 	if (headerEndPos == std::string::npos) {
 		headerEndPos = this->_content.find("\n\n");
