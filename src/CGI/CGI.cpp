@@ -19,17 +19,24 @@ CGI::~CGI(void) {
 }
 
 std::string CGI::execute(const std::string& body) {
-	int stdin_pipe[2] = {-1, -1}, stdout_pipe[2] = {-1, -1};
-	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0) {
-		return "{\"success\": false, \"error\": \"Pipe creation failed\"}";
+	char input_tmp[] = "/tmp/cgi_input_XXXXXX";
+	char output_tmp[] = "/tmp/cgi_output_XXXXXX";
+	int input_fd = mkstemp(input_tmp);
+	int output_fd = mkstemp(output_tmp);
+	if (input_fd < 0 || output_fd < 0) {
+		if (input_fd >= 0) close(input_fd);
+		if (output_fd >= 0) close(output_fd);
+		return "{\"success\": false, \"error\": \"Temp file creation failed\"}";
 	}
 
 	std::string scriptPath = this->_env["SCRIPT_NAME"];
-	if (this->_executorPath.empty() || access(scriptPath.c_str(), F_OK | X_OK) != 0) {
-		close(stdin_pipe[0]); close(stdin_pipe[1]);
-		close(stdout_pipe[0]); close(stdout_pipe[1]);
-		return "{\"success\": false, \"error\": \"Invalid script or executor\"}";
-	}
+	std::cout << "Executing CGI script: " << scriptPath << std::endl;
+	std::cout << "Executing CGI Path: " << this->_executorPath << std::endl;
+	//if (this->_executorPath.empty() || access(scriptPath.c_str(), F_OK | X_OK) != 0) {
+	//	close(input_fd); close(output_fd);
+	//	unlink(input_tmp); unlink(output_tmp);
+	//	return "{\"success\": false, \"error\": \"Invalid script or executor\"}";
+	//}
 
 	struct timeval tv;
 	tv.tv_sec = 30;
@@ -37,22 +44,26 @@ std::string CGI::execute(const std::string& body) {
 
 	pid_t pid = fork();
 	if (pid < 0) {
-		close(stdin_pipe[0]); close(stdin_pipe[1]);
-		close(stdout_pipe[0]); close(stdout_pipe[1]);
+		close(input_fd); close(output_fd);
+		unlink(input_tmp); unlink(output_tmp);
 		return "{\"success\": false, \"error\": \"Fork failed\"}";
 	}
 
 	if (pid == 0) {
-		close(stdin_pipe[1]);
-		close(stdout_pipe[0]);
+		// Child process
+		// close(input_fd); // Close parent's input fd
+		// close(output_fd); // Close parent's output fd
 
-		if (dup2(stdin_pipe[0], STDIN_FILENO) < 0 ||
-			dup2(stdout_pipe[1], STDOUT_FILENO) < 0) {
-			_exit(1);
+		int in_fd = open(input_tmp, O_RDONLY);
+		int out_fd = open(output_tmp, O_WRONLY | O_TRUNC);
+		if (in_fd < 0 || out_fd < 0) {
+			exit(1);
 		}
-
-		close(stdin_pipe[0]);
-		close(stdout_pipe[1]);
+		if (dup2(in_fd, STDIN_FILENO) < 0 || dup2(out_fd, STDOUT_FILENO) < 0) {
+			close(in_fd); close(out_fd);
+			exit(1);
+		}
+		close(in_fd); close(out_fd);
 
 		this->formatEnvironment();
 		char *arguments[3];
@@ -61,74 +72,30 @@ std::string CGI::execute(const std::string& body) {
 		arguments[2] = NULL;
 
 		execve(this->_executorPath.c_str(), arguments, this->_envp);
-		_exit(1);
+		exit(1);
 	}
-
-	close(stdin_pipe[0]);
-	close(stdout_pipe[1]);
 
 	std::string result;
 	bool success = true;
 
+	// Write body to temp input file
 	if (!body.empty()) {
 		size_t total_written = 0;
 		const char* data = body.c_str();
 		size_t remaining = body.length();
-
 		while (remaining > 0) {
-			fd_set writefds;
-			FD_ZERO(&writefds);
-			FD_SET(stdin_pipe[1], &writefds);
-
-			struct timeval write_tv = tv;
-			int ready = select(stdin_pipe[1] + 1, NULL, &writefds, NULL, &write_tv);
-
-			if (ready <= 0) {
+			ssize_t written = write(input_fd, data + total_written, remaining < 4096 ? remaining : 4096);
+			if (written < 0) {
 				success = false;
 				break;
 			}
-
-			ssize_t written = write(stdin_pipe[1], data + total_written,
-								  remaining < 4096 ? remaining : 4096);
-			if (written <= 0) {
-				success = false;
-				break;
-			}
-
 			total_written += written;
 			remaining -= written;
 		}
 	}
+	close(input_fd);
 
-	close(stdin_pipe[1]);
-
-	if (success) {
-		char buffer[4096];
-		this->_output.clear();
-
-		while (true) {
-			fd_set readfds;
-			FD_ZERO(&readfds);
-			FD_SET(stdout_pipe[0], &readfds);
-
-			struct timeval read_tv = tv;
-			int ready = select(stdout_pipe[0] + 1, &readfds, NULL, NULL, &read_tv);
-
-			if (ready <= 0) {
-				success = false;
-				break;
-			}
-
-			ssize_t bytesRead = read(stdout_pipe[0], buffer, sizeof(buffer) - 1);
-			if (bytesRead <= 0) break;
-
-			buffer[bytesRead] = '\0';
-			this->_output += buffer;
-		}
-	}
-
-	close(stdout_pipe[0]);
-
+	// Wait for child and read output from temp file
 	int status;
 	struct timeval wait_tv = tv;
 	fd_set waitfds;
@@ -137,9 +104,7 @@ std::string CGI::execute(const std::string& body) {
 	while (true) {
 		pid_t result = waitpid(pid, &status, WNOHANG);
 		if (result == pid) break;
-
-		if (result < 0 ||
-			select(0, &waitfds, NULL, NULL, &wait_tv) <= 0) {
+		if (result < 0 || select(0, &waitfds, NULL, NULL, &wait_tv) <= 0) {
 			kill(pid, SIGTERM);
 			usleep(100000);
 			kill(pid, SIGKILL);
@@ -150,10 +115,25 @@ std::string CGI::execute(const std::string& body) {
 		usleep(1000);
 	}
 
+	this->_output.clear();
+	int out_fd = open(output_tmp, O_RDONLY);
+	if (out_fd >= 0 && success) {
+		char buffer[4096];
+		ssize_t bytesRead;
+		while ((bytesRead = read(out_fd, buffer, sizeof(buffer) - 1)) > 0) {
+			buffer[bytesRead] = '\0';
+			this->_output += buffer;
+		}
+		close(out_fd);
+	} else {
+		success = false;
+	}
+	unlink(input_tmp);
+	unlink(output_tmp);
+
 	if (!success || (WIFEXITED(status) && WEXITSTATUS(status) != 0)) {
 		return "{\"success\": false, \"error\": \"CGI execution failed\"}";
 	}
-
 	return this->_output;
 }
 
@@ -181,8 +161,9 @@ char **CGI::formatEnvironment() {
 
 void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std::string location, Config &config ) {
 	(void)location;
+	(void)scriptPath;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
-	this->_addEnv("SCRIPT_NAME", scriptPath);
+	//this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	this->_addEnv("QUERY_STRING", "");
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
