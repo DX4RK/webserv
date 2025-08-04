@@ -66,8 +66,8 @@ Response::Response(Request &request, Config *config) {
 	//	this->addHeader("Content-type", "text/plain");
 	//	this->addHeader("Content-Length", ft_itoa(methodContent.size()));
 	//}
-
 	this->_response += this->_headers + "\n" + methodContent;
+	std::cout << this->_response << std::endl;
 }
 
 Response::~Response( void ) {
