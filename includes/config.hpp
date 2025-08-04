@@ -10,6 +10,8 @@
 #define DEFAULT_CGI_SCRIPTS "./src/_default/cgi_scripts"
 #define LISTING_CGI "./src/_default/cgi_scripts/listing.py"
 
+#define SD_MAX_BODY_SIZE 10000000
+
 #include "utils.hpp"
 
 typedef struct value_config {
