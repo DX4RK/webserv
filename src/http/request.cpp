@@ -7,6 +7,12 @@ std::string readChunkedBody(const std::vector<std::string>& lines, size_t start)
 	std::string body = "";
 	size_t i = start;
 	while (i < lines.size()) {
+		//if (body.length() > SD_MAX_BODY_SIZE) {
+		//	// Skip empty line after chunk
+		//	i++;
+		//	body.clear();
+		//	break;;
+		//}
 		std::string line = trim(lines[i++], false);
 		if (line.empty()) continue;
 
@@ -119,6 +125,7 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 	std::string location;
 	std::string path;
 	std::string refererUrl;
+	std::string originalUrl = url;
 
 	bool directory = false;
 
@@ -163,12 +170,17 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 
 	// CGI CHECK
 
+	size_t extensionEnd = 0;
 	this->_cgiEnabled = false;
 	if (!directory && locationConfig.cgi_extension.size() > 0) {
 		std::string fileExtension;
 		size_t dotPosition = path.find_last_of('.');
-		if (dotPosition != std::string::npos)
-			fileExtension = path.substr(dotPosition);
+		if (dotPosition != std::string::npos) {
+			extensionEnd = path.find_first_of('/', dotPosition);
+			if (extensionEnd == std::string::npos)
+				extensionEnd = path.length();
+			fileExtension = path.substr(dotPosition, extensionEnd - dotPosition);
+		}
 		if (!fileExtension.empty()) {
 			for (size_t i = 0; i < locationConfig.cgi_extension.size(); i++) {
 				if (locationConfig.cgi_extension.at(i) == fileExtension) {
@@ -179,7 +191,13 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 			}
 		}
 	}
-
+	// for tester
+	this->_pathInfo = originalUrl;
+	/*if (this->_cgiEnabled && extensionEnd < path.length()) {
+		this->_pathInfo = path.substr(extensionEnd);
+		this->_path = path.substr(0, extensionEnd);
+	}*/
+	std::cout << "Path info: " << this->_pathInfo << std::endl;
 	// LOG
 
 	std::cout << "Path: " << path << std::endl;
@@ -251,6 +269,7 @@ std::string Request::getFileName(void) const { return this->_fileName; }
 std::string Request::getBody(void) const { return this->_body; }
 std::string Request::getCgiExtension( void ) const { return this->_cgiExtension; }
 std::string Request::getProtocol(void) const { return this->_protocol; }
+std::string Request::getPathInfo(void) const { return this->_pathInfo; }
 
 std::map<std::string, std::string> Request::getHeaders(void) const { return this->_headers; }
 

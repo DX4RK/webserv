@@ -24,6 +24,7 @@ public:
 	std::string getCgiExtension( void ) const;
 	std::string getProtocol( void ) const;
 	std::string getFileName( void ) const;
+	std::string getPathInfo( void ) const;
 
 	bool isCgiEnabled( void ) const;
 	bool isReqDirectory( void ) const;
@@ -42,6 +43,7 @@ private:
 	std::string _location;
 	std::string _cgiExtension;
 	std::string _originalUrl;
+	std::string _pathInfo;
 
 	std::string _refer;
 	std::string _body;
