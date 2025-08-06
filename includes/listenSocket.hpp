@@ -6,7 +6,7 @@
 #include "bindingSocket.hpp"
 
 #define MAX_CLIENTS 100
-#define BUFFER_SIZE 30000
+#define BUFFER_SIZE 131072
 
 class ListenSocket {
 public:

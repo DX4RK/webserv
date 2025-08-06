@@ -57,73 +57,63 @@ void ListenSocket::accepter(void) {
 }
 
 void ListenSocket::handler() {
-	char tempBuffer[4096];
+    char* tempBuffer = new char[BUFFER_SIZE];
+    std::string request;
 
-	ssize_t bytesRead;
-	size_t contentLength = 0;
+    bool headersParsed = false;
+    bool isChunked = false;
+    size_t contentLength = 0;
+    size_t totalRead = 0;
 
-	std::string request;
-	bool headersParsed = false;
-	bool isChunked = false;
+    while (true) {
+        ssize_t bytesRead = recv(this->_newSocket, tempBuffer, BUFFER_SIZE - 1, 0); // Removed MSG_DONTWAIT
+        if (bytesRead <= 0) {
+            break;
+        }
 
-	int errorCode = 0;
-	//std::time_t start = std::time(0);
+        totalRead += static_cast<size_t>(bytesRead);
+        tempBuffer[bytesRead] = '\0';
+        request.append(tempBuffer, bytesRead);
 
-	while (true) {
-		 //std::time_t now = std::time(0);
-		// if (std::difftime(now, start) > this->_timeout) {
-		//		std::cout << "MAX TIME REACHED!" << std::endl;
-		//		errorCode = 408;
-		//	break;
-		//}
+        // Parse headers on first iteration
+        if (!headersParsed) {
+            size_t headerEnd = request.find("\r\n\r\n");
+            if (headerEnd != std::string::npos) {
+                headersParsed = true;
+                std::string headers = request.substr(0, headerEnd);
 
-		bytesRead = recv(this->_newSocket, tempBuffer, sizeof(tempBuffer) - 1, 0);
-		if (bytesRead <= 0)
-			break;
+                if (headers.find("Transfer-Encoding: chunked") != std::string::npos) {
+                    isChunked = true;
+                } else {
+                    size_t pos = headers.find("Content-Length:");
+                    if (pos != std::string::npos) {
+                        size_t start = headers.find_first_of("0123456789", pos);
+                        if (start != std::string::npos) {
+                            contentLength = static_cast<size_t>(std::atoll(headers.c_str() + start));
+                            // Only break if we have all the data
+                            if (totalRead >= (headerEnd + 4 + contentLength)) {
+                                break;
+                            }
+                        } else {
+                            break; // No body expected
+                        }
+                    } else {
+                        break; // No Content-Length header means no body
+                    }
+                }
+            }
+        } else if (!isChunked && contentLength > 0) {
+            // If headers are parsed and we know the content length
+            if (totalRead >= contentLength) {
+                break;
+            }
+        } else if (isChunked && request.find("\r\n0\r\n\r\n") != std::string::npos) {
+            break;
+        }
+    }
 
-		tempBuffer[bytesRead] = '\0';
-		request.append(tempBuffer, bytesRead);
-
-		// Step 1: Parse headers if not done yet
-		if (!headersParsed) {
-			size_t headerEnd = request.find("\r\n\r\n");
-			if (headerEnd != std::string::npos) {
-				headersParsed = true;
-
-				std::string headers = request.substr(0, headerEnd);
-
-				// Check for Transfer-Encoding: chunked
-				if (headers.find("Transfer-Encoding: chunked") != std::string::npos) {
-					isChunked = true;
-				} else {
-					// Check for Content-Length
-					size_t pos = headers.find("Content-Length:");
-					if (pos != std::string::npos) {
-						size_t start = headers.find_first_of("0123456789", pos);
-						if (start != std::string::npos) {
-							contentLength = std::atoi(headers.c_str() + start);
-						}
-					}
-				}
-			}
-		}
-
-		// Step 2: Stop when full body is received
-		if (headersParsed) {
-			if (isChunked) {
-				// Wait until we see the end of a chunked body: \r\n0\r\n\r\n
-				if (request.find("\r\n0\r\n\r\n") != std::string::npos)
-					break;
-			} else {
-				size_t headerEnd = request.find("\r\n\r\n");
-				size_t totalNeeded = headerEnd + 4 + contentLength;
-				if (request.size() >= totalNeeded)
-					break;
-			}
-		}
-	}
-
-	this->_buffer = request;
+    delete[] tempBuffer;
+    this->_buffer = request;
 
 	Config* config = NULL;
 	std::map<int, size_t>::iterator it = this->_clientFdToConfigIdx.find(this->_newSocket);
@@ -136,7 +126,7 @@ void ListenSocket::handler() {
 		std::cerr << "[webserv] ERROR: No config found for client fd " << this->_newSocket << std::endl;
 		return;
 	}
-	Request req(*this, config, errorCode);
+	Request req(*this, config, 0);
 	Response response(req, config);
 	this->response = response.getResponse();
 
