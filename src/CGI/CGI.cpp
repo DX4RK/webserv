@@ -1,4 +1,6 @@
 #include "CGI.hpp"
+#include <sys/vfs.h>    // For statfs
+#include <sys/statvfs.h>  // For statvfs
 
 CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers, int serverPort) {
 	this->_envpFormatted = false;
@@ -21,13 +23,24 @@ CGI::~CGI(void) {
 std::string CGI::execute(const std::string& body) {
 	char input_tmp[] = "/tmp/cgi_input_XXXXXX";
 	char output_tmp[] = "/tmp/cgi_output_XXXXXX";
+	std::cerr << "Creating temporary files..." << std::endl;
 	int input_fd = mkstemp(input_tmp);
 	int output_fd = mkstemp(output_tmp);
 	if (input_fd < 0 || output_fd < 0) {
-		if (input_fd >= 0) close(input_fd);
-		if (output_fd >= 0) close(output_fd);
+		std::cerr << "Temp file creation failed: errno=" << errno << " (" << strerror(errno) << ")" << std::endl;
+		if (input_fd >= 0) {
+			std::cerr << "Input file created at: " << input_tmp << std::endl;
+			close(input_fd);
+		}
+		if (output_fd >= 0) {
+			std::cerr << "Output file created at: " << output_tmp << std::endl;
+			close(output_fd);
+		}
 		return "{\"success\": false, \"error\": \"Temp file creation failed\"}";
 	}
+	std::cerr << "Successfully created temp files:" << std::endl;
+	std::cerr << "Input: " << input_tmp << " (fd: " << input_fd << ")" << std::endl;
+	std::cerr << "Output: " << output_tmp << " (fd: " << output_fd << ")" << std::endl;
 
 	std::string scriptPath = this->_env["SCRIPT_NAME"];
 	std::cout << "Executing CGI script: " << scriptPath << std::endl;
@@ -78,21 +91,73 @@ std::string CGI::execute(const std::string& body) {
 	std::string result;
 	bool success = true;
 
-	// Write body to temp input file
+	// Write body to temp input file with progress checks
 	if (!body.empty()) {
+		// First, ensure we have enough disk space
+		struct statfs fs_stat;
+		if (statfs("/tmp", &fs_stat) == 0) {
+			unsigned long long free_space = fs_stat.f_bsize * fs_stat.f_bavail;
+			if (free_space < (unsigned long long)body.length()) {
+				close(input_fd);
+				unlink(input_tmp);
+				unlink(output_tmp);
+				return "{\"success\": false, \"error\": \"Not enough disk space\"}";
+			}
+		}
+
+		// Set the exact file size we need
+		if (ftruncate(input_fd, body.length()) < 0) {
+			close(input_fd);
+			unlink(input_tmp);
+			unlink(output_tmp);
+			return "{\"success\": false, \"error\": \"Failed to allocate file space\"}";
+		}
+
 		size_t total_written = 0;
 		const char* data = body.c_str();
 		size_t remaining = body.length();
-		while (remaining > 0) {
-			ssize_t written = write(input_fd, data + total_written, remaining < 4096 ? remaining : 4096);
+
+		while (remaining > 0 && success) {
+			// Write in smaller chunks and verify child process is still alive
+			size_t chunk_size = (remaining < 65536) ? remaining : 65536; // 64KB chunks
+			std::cerr << "Attempting to write " << chunk_size << " bytes at offset " << total_written << std::endl;
+			ssize_t written = write(input_fd, data + total_written, chunk_size);
+
 			if (written < 0) {
+				if (errno == EINTR) continue;
+				std::cerr << "CGI body write error: errno=" << errno << " (" << strerror(errno) << ")" << std::endl;
+				std::cerr << "Failed at offset " << total_written << "/" << body.length() << std::endl;
+				std::cerr << "Input file descriptor: " << input_fd << std::endl;
 				success = false;
 				break;
 			}
+			std::cerr << "Successfully wrote " << written << " bytes" << std::endl;
+
 			total_written += written;
 			remaining -= written;
+
+			// Check if child is still alive
+			if (waitpid(pid, NULL, WNOHANG) == pid) {
+				success = false;
+				break;
+			}
+
+			// Small delay to prevent overwhelming the system
+			if (remaining > 0) {
+				usleep(1000); // 1ms pause between large chunks
+			}
+		}
+
+		if (!success) {
+			close(input_fd);
+			unlink(input_tmp);
+			unlink(output_tmp);
+			return "{\"success\": false, \"error\": \"Failed to write request body\"}";
 		}
 	}
+
+	// Ensure all data is written to disk
+	fsync(input_fd);
 	close(input_fd);
 
 	// Wait for child and read output from temp file
@@ -161,9 +226,8 @@ char **CGI::formatEnvironment() {
 
 void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std::string location, Config &config ) {
 	(void)location;
-	(void)scriptPath;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
-	//this->_addEnv("SCRIPT_NAME", scriptPath);
+	this->_addEnv("SCRIPT_NAME", scriptPath);  // This is needed!
 	this->_addEnv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	this->_addEnv("QUERY_STRING", "");
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
@@ -172,8 +236,8 @@ void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std:
 	this->_addEnv("SERVER_NAME", config.getServerName());
 	this->_addEnv("SERVER_PORT", ft_itoa(this->_serverPort));
 
-	this->_addEnvHeader("CONTENT_TYPE", "Content-Type");
-	this->_addEnvHeader("CONTENT_LENGTH", "Content-Length");
+	// For POST requests, Content-Length will be set in execute()
+	this->_addEnv("CONTENT_TYPE", "application/octet-stream");  // Default content type for binary data
 
 	this->_executorPath = executorPath;
 }
