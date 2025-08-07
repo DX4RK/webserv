@@ -11,7 +11,6 @@ void handle_sigint(int signum) {
 
 std::string getConfigFile(int argc, char **argv) {
 	if (argc <= 1) {
-		// Try default config file first
 		std::string defaultConfig = "./config/default.conf";
 		if (fileExists(defaultConfig))
 			return defaultConfig;
@@ -31,18 +30,14 @@ int main(int argc, char **argv) {
 	try {
 		config_file = getConfigFile(argc, argv);
 	} catch (std::exception &e) {
-		config_file = "./config/default.conf";
-		if (argc > 1) {
-			std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << RED << BOLD << " Error: specified config file does not exist, default config will be used." << RESET << std::endl;
-		} else {
-			std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << LIGHT_YELLOW << BOLD << " Warning: no config file specified, using default config." << RESET << std::endl;
-		}
+		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << RED << BOLD << " Specift a config file." << RESET << std::endl;
+		return EXIT_FAILURE;
 	}
 
 
 	std::vector<Config*> configs;
 	std::vector<BindingSocket*> allSockets;
-	std::vector<Config*> socketConfigs; // parallel to allSockets
+	std::vector<Config*> socketConfigs;
 
 
 	int newServerStart = 0;
@@ -57,7 +52,7 @@ int main(int argc, char **argv) {
 			for (i = 0; i < ports.size(); i++) {
 				BindingSocket* socket = new BindingSocket(AF_INET, SOCK_STREAM, 0, INADDR_ANY, config, ports[i]);
 				allSockets.push_back(socket);
-				socketConfigs.push_back(config); // keep the config for this socket
+				socketConfigs.push_back(config);
 			}
 		} catch (std::exception &e) {
 			std::cerr << "Error creating socket for port " << ports[i] << ": " << e.what() << std::endl;
