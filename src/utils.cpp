@@ -24,11 +24,6 @@ std::string getFileModifiedTime(std::string path) {
 	return "";
 }
 
-void make_error(std::string errorMessage, int exitCode) {
-	std::cout << errorMessage << std::endl;
-	exit(exitCode);
-}
-
 std::string getLastSub(const std::string& src, char c) {
 	if (src.empty())
 		return "";

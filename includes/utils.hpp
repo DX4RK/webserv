@@ -59,7 +59,6 @@ std::string trim(const std::string& str, bool except_newline);
 /*std::string getContentType(const std::string& file_path);*/
 
 void initMimes();
-void make_error(std::string errorMessage, int exitCode);
 
 char	*ft_strdup(const char *str);
 
