@@ -35,85 +35,64 @@ std::string ListenSocket::getBuffer(void) const {
 	return this->_buffer;
 }
 
-void ListenSocket::accepter(void) {
-	// Accept on all listening sockets, and map new client fd to its config
-	for (size_t i = 0; i < this->_sockets.size(); i++) {
-		int sock = this->_sockets[i]->get_sock();
-		for (size_t j = 0; j < this->_pollfds.size(); j++) {
-			if (this->_pollfds[j].fd == sock && (this->_pollfds[j].revents & POLLIN)) {
-				struct sockaddr_in adress = this->_sockets[i]->get_address();
-				int adress_len = sizeof(adress);
-				this->_newSocket = accept(sock, (struct sockaddr *)&adress, (socklen_t*)&adress_len);
-				if (this->_newSocket < 0)
-					make_error("failed to accept socket", EXIT_FAILURE);
-				// Map new client fd to config index
-				this->_clientFdToConfigIdx[this->_newSocket] = i;
-				return;
+void ListenSocket::handler() {
+	char* tempBuffer = new char[BUFFER_SIZE];
+	std::string request;
+
+	bool headersParsed = false;
+	bool isChunked = false;
+	size_t contentLength = 0;
+	size_t totalRead = 0;
+
+	while (true) {
+		ssize_t bytesRead = recv(this->_newSocket, tempBuffer, BUFFER_SIZE - 1, 0); // Removed MSG_DONTWAIT
+		if (bytesRead <= 0) {
+			break;
+		}
+
+		totalRead += static_cast<size_t>(bytesRead);
+		tempBuffer[bytesRead] = '\0';
+		request.append(tempBuffer, bytesRead);
+
+		// Parse headers on first iteration
+		if (!headersParsed) {
+			size_t headerEnd = request.find("\r\n\r\n");
+			if (headerEnd != std::string::npos) {
+				headersParsed = true;
+				std::string headers = request.substr(0, headerEnd);
+
+				if (headers.find("Transfer-Encoding: chunked") != std::string::npos) {
+					isChunked = true;
+				} else {
+					size_t pos = headers.find("Content-Length:");
+					if (pos != std::string::npos) {
+						size_t start = headers.find_first_of("0123456789", pos);
+						if (start != std::string::npos) {
+							contentLength = static_cast<size_t>(std::atoll(headers.c_str() + start));
+							// Only break if we have all the data
+							if (totalRead >= (headerEnd + 4 + contentLength)) {
+								break;
+							}
+						} else {
+							break; // No body expected
+						}
+					} else {
+						break; // No Content-Length header means no body
+					}
+				}
 			}
+		} else if (!isChunked && contentLength > 0) {
+			// If headers are parsed and we know the content length
+			if (totalRead >= contentLength) {
+				break;
+			}
+		} else if (isChunked && request.find("\r\n0\r\n\r\n") != std::string::npos) {
+			break;
 		}
 	}
-// Add this to the private section of ListenSocket:
-// std::map<int, size_t> _clientFdToConfigIdx;
-}
 
-void ListenSocket::handler() {
-    char* tempBuffer = new char[BUFFER_SIZE];
-    std::string request;
-
-    bool headersParsed = false;
-    bool isChunked = false;
-    size_t contentLength = 0;
-    size_t totalRead = 0;
-
-    while (true) {
-        ssize_t bytesRead = recv(this->_newSocket, tempBuffer, BUFFER_SIZE - 1, 0); // Removed MSG_DONTWAIT
-        if (bytesRead <= 0) {
-            break;
-        }
-
-        totalRead += static_cast<size_t>(bytesRead);
-        tempBuffer[bytesRead] = '\0';
-        request.append(tempBuffer, bytesRead);
-
-        // Parse headers on first iteration
-        if (!headersParsed) {
-            size_t headerEnd = request.find("\r\n\r\n");
-            if (headerEnd != std::string::npos) {
-                headersParsed = true;
-                std::string headers = request.substr(0, headerEnd);
-
-                if (headers.find("Transfer-Encoding: chunked") != std::string::npos) {
-                    isChunked = true;
-                } else {
-                    size_t pos = headers.find("Content-Length:");
-                    if (pos != std::string::npos) {
-                        size_t start = headers.find_first_of("0123456789", pos);
-                        if (start != std::string::npos) {
-                            contentLength = static_cast<size_t>(std::atoll(headers.c_str() + start));
-                            // Only break if we have all the data
-                            if (totalRead >= (headerEnd + 4 + contentLength)) {
-                                break;
-                            }
-                        } else {
-                            break; // No body expected
-                        }
-                    } else {
-                        break; // No Content-Length header means no body
-                    }
-                }
-            }
-        } else if (!isChunked && contentLength > 0) {
-            // If headers are parsed and we know the content length
-            if (totalRead >= contentLength) {
-                break;
-            }
-        } else if (isChunked && request.find("\r\n0\r\n\r\n") != std::string::npos) {
-            break;
-        }
-    }
-
-    delete[] tempBuffer;
-    this->_buffer = request;
+	delete[] tempBuffer;
+	this->_buffer = request;
 
 	Config* config = NULL;
 	std::map<int, size_t>::iterator it = this->_clientFdToConfigIdx.find(this->_newSocket);
@@ -190,7 +169,7 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 		if (pollResult < 0) {
 			if (errno == EINTR) // interrupted by signal
 				continue;
-			make_error("poll() failed", EXIT_FAILURE);
+			throw std::runtime_error("poll failed");
 		}
 
 		// Vérifier nouveaux clients sur sockets listening

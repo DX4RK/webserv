@@ -32,7 +32,6 @@ private:
 	// Map client fd to config index
 	std::map<int, size_t> _clientFdToConfigIdx;
 
-	void accepter(void);
 	void handler(void);
 	void responder(void);
 
