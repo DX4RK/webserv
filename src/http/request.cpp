@@ -7,12 +7,6 @@ std::string readChunkedBody(const std::vector<std::string>& lines, size_t start)
 	std::string body = "";
 	size_t i = start;
 	while (i < lines.size()) {
-		//if (body.length() > SD_MAX_BODY_SIZE) {
-		//	// Skip empty line after chunk
-		//	i++;
-		//	body.clear();
-		//	break;;
-		//}
 		std::string line = trim(lines[i++], false);
 		if (line.empty()) continue;
 
