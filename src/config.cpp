@@ -570,7 +570,8 @@ void Config::_readFile(int fd) {
 	char buffer[8192];
 
 	while ((bytesRead = read(fd, buffer, sizeof(buffer) - 1)) > 0)
-		this->_fileBuffer[bytesRead] = '\0';
+		continue;
+		//this->_fileBuffer[bytesRead] = '\0';
 	close(fd);
 
 	this->_fileBuffer = static_cast<std::string>(buffer);
