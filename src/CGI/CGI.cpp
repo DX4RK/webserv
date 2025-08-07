@@ -21,149 +21,149 @@ CGI::~CGI(void) {
 }
 
 std::string CGI::execute(const std::string& body) {
-    char input_tmp[] = "/tmp/cgi_input_XXXXXX";
-    char output_tmp[] = "/tmp/cgi_output_XXXXXX";
+	char input_tmp[] = "/tmp/cgi_input";
+	char output_tmp[] = "/tmp/cgi_output";
 
-    int input_fd = mkstemp(input_tmp);
-    int output_fd = mkstemp(output_tmp);
+	int input_fd = mkstemp(input_tmp);
+	int output_fd = mkstemp(output_tmp);
 
-    if (input_fd < 0 || output_fd < 0) {
-        if (input_fd >= 0) close(input_fd);
-        if (output_fd >= 0) close(output_fd);
-        unlink(input_tmp);
-        unlink(output_tmp);
-        return "{\"success\": false, \"error\": \"Temp file creation failed\"}";
-    }
+	if (input_fd < 0 || output_fd < 0) {
+		if (input_fd >= 0) close(input_fd);
+		if (output_fd >= 0) close(output_fd);
+		unlink(input_tmp);
+		unlink(output_tmp);
+		return "{\"success\": false, \"error\": \"Temp file creation failed\"}";
+	}
 
-    std::string scriptPath = this->_env["SCRIPT_NAME"];
+	std::string scriptPath = this->_env["SCRIPT_NAME"];
 
-    // Set content length for POST requests
-    if (!body.empty()) {
-        this->_addEnv("CONTENT_LENGTH", ft_itoa(body.length()));
-    }
+	// Set content length for POST requests
+	if (!body.empty()) {
+		this->_addEnv("CONTENT_LENGTH", ft_itoa(body.length()));
+	}
 
-    pid_t pid = fork();
-    if (pid < 0) {
-        close(input_fd);
-        close(output_fd);
-        unlink(input_tmp);
-        unlink(output_tmp);
-        return "{\"success\": false, \"error\": \"Fork failed\"}";
-    }
+	pid_t pid = fork();
+	if (pid < 0) {
+		close(input_fd);
+		close(output_fd);
+		unlink(input_tmp);
+		unlink(output_tmp);
+		return "{\"success\": false, \"error\": \"Fork failed\"}";
+	}
 
-    if (pid == 0) {
-        int in_fd = open(input_tmp, O_RDONLY);
-        int out_fd = open(output_tmp, O_WRONLY | O_TRUNC);
+	if (pid == 0) {
+		int in_fd = open(input_tmp, O_RDONLY);
+		int out_fd = open(output_tmp, O_WRONLY | O_TRUNC);
 
-        if (in_fd < 0 || out_fd < 0 ||
-            dup2(in_fd, STDIN_FILENO) < 0 ||
-            dup2(out_fd, STDOUT_FILENO) < 0) {
-            _exit(1);
-        }
+		if (in_fd < 0 || out_fd < 0 ||
+			dup2(in_fd, STDIN_FILENO) < 0 ||
+			dup2(out_fd, STDOUT_FILENO) < 0) {
+			_exit(1);
+		}
 
-        close(in_fd);
-        close(out_fd);
-        close(input_fd);
-        close(output_fd);
+		close(in_fd);
+		close(out_fd);
+		close(input_fd);
+		close(output_fd);
 
-        this->formatEnvironment();
-        char *arguments[3];
-        arguments[0] = const_cast<char*>(this->_executorPath.c_str());
-        arguments[1] = const_cast<char*>(scriptPath.c_str());
-        arguments[2] = NULL;
+		this->formatEnvironment();
+		char *arguments[3];
+		arguments[0] = const_cast<char*>(this->_executorPath.c_str());
+		arguments[1] = const_cast<char*>(scriptPath.c_str());
+		arguments[2] = NULL;
 
-        execve(this->_executorPath.c_str(), arguments, this->_envp);
-        std::cerr << "execve failed: " << strerror(errno) << std::endl;
-        _exit(1);
-    }
+		execve(this->_executorPath.c_str(), arguments, this->_envp);
+		std::cerr << "execve failed: " << strerror(errno) << std::endl;
+		_exit(1);
+	}
 
-    // Parent process
-    close(output_fd);
-    bool success = true;
+	// Parent process
+	close(output_fd);
+	bool success = true;
 
-    // Write body data
-    if (!body.empty()) {
-        const size_t CHUNK_SIZE = 65536;
-        size_t total_written = 0;
-        const char* data = body.c_str();
-        size_t remaining = body.length();
+	// Write body data
+	if (!body.empty()) {
+		const size_t CHUNK_SIZE = 65536;
+		size_t total_written = 0;
+		const char* data = body.c_str();
+		size_t remaining = body.length();
 
-        // Write the entire body first
-        while (remaining > 0 && success) {
-            size_t chunk_size = (remaining < CHUNK_SIZE) ? remaining : CHUNK_SIZE;
-            ssize_t written = write(input_fd, data + total_written, chunk_size);
+		// Write the entire body first
+		while (remaining > 0 && success) {
+			size_t chunk_size = (remaining < CHUNK_SIZE) ? remaining : CHUNK_SIZE;
+			ssize_t written = write(input_fd, data + total_written, chunk_size);
 
-            if (written <= 0) {
-                if (errno == EINTR) continue;
-                success = false;
-                break;
-            }
+			if (written <= 0) {
+				if (errno == EINTR) continue;
+				success = false;
+				break;
+			}
 
-            total_written += written;
-            remaining -= written;
-        }
+			total_written += written;
+			remaining -= written;
+		}
 
-        // Make sure all data is written before closing
-        fsync(input_fd);
-    }
+		// Make sure all data is written before closing
+		fsync(input_fd);
+	}
 
-    close(input_fd);
+	close(input_fd);
 
-    if (!success) {
-        kill(pid, SIGTERM);
-        usleep(100000);
-        kill(pid, SIGKILL);
-        waitpid(pid, NULL, 0);
-        unlink(input_tmp);
-        unlink(output_tmp);
-        return "{\"success\": false, \"error\": \"Failed to write request body\"}";
-    }
+	if (!success) {
+		kill(pid, SIGTERM);
+		usleep(100000);
+		kill(pid, SIGKILL);
+		waitpid(pid, NULL, 0);
+		unlink(input_tmp);
+		unlink(output_tmp);
+		return "{\"success\": false, \"error\": \"Failed to write request body\"}";
+	}
 
-    // Wait for CGI process with timeout
-    int status;
-    time_t start_time = time(NULL);
-    const time_t timeout = 120; // Increased timeout for large files
+	// Wait for CGI process with timeout
+	int status;
+	time_t start_time = time(NULL);
+	const time_t timeout = 120; // Increased timeout for large files
 
-    while (true) {
-        pid_t result = waitpid(pid, &status, WNOHANG);
-        if (result == pid) break;
+	while (true) {
+		pid_t result = waitpid(pid, &status, WNOHANG);
+		if (result == pid) break;
 
-        if (result < 0 || (time(NULL) - start_time > timeout)) {
-            kill(pid, SIGTERM);
-            usleep(100000);
-            kill(pid, SIGKILL);
-            waitpid(pid, NULL, 0);
-            unlink(input_tmp);
-            unlink(output_tmp);
-            return "{\"success\": false, \"error\": \"CGI execution timeout\"}";
-        }
-        usleep(10000);
-    }
+		if (result < 0 || (time(NULL) - start_time > timeout)) {
+			kill(pid, SIGTERM);
+			usleep(100000);
+			kill(pid, SIGKILL);
+			waitpid(pid, NULL, 0);
+			unlink(input_tmp);
+			unlink(output_tmp);
+			return "{\"success\": false, \"error\": \"CGI execution timeout\"}";
+		}
+		usleep(10000);
+	}
 
-    // Read CGI output
-    this->_output.clear();
-    int out_fd = open(output_tmp, O_RDONLY);
-    if (out_fd >= 0) {
-        std::string output;
-        char buffer[65536];
-        ssize_t bytesRead;
+	// Read CGI output
+	this->_output.clear();
+	int out_fd = open(output_tmp, O_RDONLY);
+	if (out_fd >= 0) {
+		std::string output;
+		char buffer[65536];
+		ssize_t bytesRead;
 
-        while ((bytesRead = read(out_fd, buffer, sizeof(buffer) - 1)) > 0) {
-            output.append(buffer, bytesRead);
-        }
+		while ((bytesRead = read(out_fd, buffer, sizeof(buffer) - 1)) > 0) {
+			output.append(buffer, bytesRead);
+		}
 
-        close(out_fd);
-        this->_output = output;
-    }
+		close(out_fd);
+		this->_output = output;
+	}
 
-    unlink(input_tmp);
-    unlink(output_tmp);
+	unlink(input_tmp);
+	unlink(output_tmp);
 
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        return "{\"success\": false, \"error\": \"CGI execution failed\"}";
-    }
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+		return "{\"success\": false, \"error\": \"CGI execution failed\"}";
+	}
 
-    return this->_output;
+	return this->_output;
 }
 
 std::string CGI::getOutput() const {
