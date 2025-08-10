@@ -6,7 +6,7 @@ import html
 
 print("Content-Type: text/html\n")
 
-target_path = os.environ.get('PATH')
+target_path = os.environ.get('PATH_INFO')
 
 if not target_path:
 	print("Content-Type: text/plain\n")

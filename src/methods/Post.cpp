@@ -107,10 +107,6 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
-	// THIS IS FUCKING STUPID, BUT IT'S HOW IT WORKS WITH TESTER
-	cgi_handler._addEnv("PATH_INFO", request.getPathInfo());
-	cgi_handler._addEnv("SCRIPT_NAME", request.getPathInfo());
-	cgi_handler._addEnv("REQUEST_URI", request.getPathInfo());
 	cgi_handler.formatEnvironment();
 
 

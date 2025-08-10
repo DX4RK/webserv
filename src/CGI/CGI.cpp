@@ -21,8 +21,8 @@ CGI::~CGI(void) {
 }
 
 std::string CGI::execute(const std::string& body) {
-	char input_tmp[] = "/tmp/cgi_input";
-	char output_tmp[] = "/tmp/cgi_output";
+	char input_tmp[] = "./cgi_inputXXXXXX";
+	char output_tmp[] = "./cgi_outputXXXXXX";
 
 	int input_fd = mkstemp(input_tmp);
 	int output_fd = mkstemp(output_tmp);
@@ -68,8 +68,8 @@ std::string CGI::execute(const std::string& body) {
 
 		this->formatEnvironment();
 		char *arguments[3];
-		arguments[0] = const_cast<char*>(this->_executorPath.c_str());
-		arguments[1] = const_cast<char*>(scriptPath.c_str());
+	arguments[0] = const_cast<char*>(this->_executorPath.c_str());
+	arguments[1] = const_cast<char*>(scriptPath.c_str()); // chemin réel du script sur le disque
 		arguments[2] = NULL;
 
 		execve(this->_executorPath.c_str(), arguments, this->_envp);
