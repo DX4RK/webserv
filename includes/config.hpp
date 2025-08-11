@@ -9,6 +9,9 @@
 
 #define DEFAULT_CGI_SCRIPTS "./src/_default/cgi_scripts"
 #define LISTING_CGI "./src/_default/cgi_scripts/listing.py"
+#define LISTING_CGI_LOCATION "./src/_default/cgi_scripts"
+#define LISTING_CGI_EXT ".py"
+#define LISTING_CGI_EXECUTOR "/bin/python3"
 
 #define SD_MAX_BODY_SIZE 10000000
 
