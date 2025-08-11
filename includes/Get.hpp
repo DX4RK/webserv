@@ -25,7 +25,7 @@ private:
 	void _checkCgiResponse(Response &response);
 	bool _isCgiRequest(Request &request);
 	void _handleCgiRequest(Request &request);
-	void _executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData);
+	void _executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData, bool listing);
 	std::string _getContentTypeFromScript(const std::string& scriptPath) const;
 
 	bool _handleFileUrl(Request &request);

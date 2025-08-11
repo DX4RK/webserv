@@ -36,7 +36,6 @@ std::string CGI::execute(const std::string& body) {
 	}
 
 	std::string scriptPath = this->_env["SCRIPT_NAME"];
-
 	// Set content length for POST requests
 	if (!body.empty()) {
 		this->_addEnv("CONTENT_LENGTH", ft_itoa(body.length()));
@@ -68,10 +67,9 @@ std::string CGI::execute(const std::string& body) {
 
 		this->formatEnvironment();
 		char *arguments[3];
-	arguments[0] = const_cast<char*>(this->_executorPath.c_str());
-	arguments[1] = const_cast<char*>(scriptPath.c_str()); // chemin réel du script sur le disque
+		arguments[0] = const_cast<char*>(this->_executorPath.c_str());
+		arguments[1] = const_cast<char*>(scriptPath.c_str()); // chemin réel du script sur le disque
 		arguments[2] = NULL;
-
 		execve(this->_executorPath.c_str(), arguments, this->_envp);
 		std::cerr << "execve failed: " << strerror(errno) << std::endl;
 		_exit(1);
