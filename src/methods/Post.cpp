@@ -57,33 +57,57 @@ bool Post::_handleFileUrl(Request &request) {
 
 void Post::_checkCgiResponse(Response &response) {
 	std::string cgiContent = this->_content;
+	size_t headerEnd = cgiContent.find("\r\n\r\n");
+	size_t headerLen = 4;
+	if (headerEnd == std::string::npos) {
+		headerEnd = cgiContent.find("\n\n");
+		headerLen = 2;
+	}
+	std::string headers, body;
+	if (headerEnd != std::string::npos) {
+		headers = cgiContent.substr(0, headerEnd);
+		body = cgiContent.substr(headerEnd + headerLen);
+	} else {
+		headers = "";
+		body = cgiContent;
+	}
 
-	size_t contentTypePos = cgiContent.find("Content-Type: ");
-	size_t contentTypeEnd = cgiContent.find_first_of('\n');
+	bool hasContentType = false;
+	bool hasContentLength = false;
+	bool hasStatus = false;
+	int statusCode = 200;
 
-	if (contentTypePos != std::string::npos) {
-		response.addHeader("Content-Type", cgiContent.substr(contentTypePos + 14, contentTypeEnd - 1));
-		cgiContent = cgiContent.substr(contentTypeEnd, cgiContent.length());
-	} else
+	std::istringstream headerStream(headers);
+	std::string line;
+	while (std::getline(headerStream, line)) {
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+		size_t colon = line.find(":");
+		if (colon == std::string::npos)
+			continue;
+		std::string key = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
+		value.erase(0, value.find_first_not_of(" \t"));
+		if (key == "Content-Type") {
+			response.addHeader("Content-Type", value);
+			hasContentType = true;
+		} else if (key == "Content-Length") {
+			response.addHeader("Content-Length", value);
+			hasContentLength = true;
+		} else if (key == "Status") {
+			statusCode = ft_atoi(value);
+			hasStatus = true;
+		} else {
+			response.addHeader(key, value);
+		}
+	}
+	if (!hasContentType)
 		response.addHeader("Content-Type", "application/json");
-
-	size_t statusCodePos = cgiContent.find("Status: ");
-	size_t statusCodeEnd = cgiContent.find_first_of('\n');
-
-	if (statusCodePos != std::string::npos) {
-		this->_returnCode = ft_atoi(cgiContent.substr(statusCodePos + 8, statusCodeEnd - 1));
-		cgiContent = cgiContent.substr(statusCodeEnd, cgiContent.length());
-	} else
-		this->_returnCode = 200;
-
-	size_t contentLengthPos = cgiContent.find("Content-Length: ");
-	size_t contentLengthEnd = cgiContent.find_first_of('\n');
-
-	if (contentLengthPos != std::string::npos) {
-		response.addHeader("Content-Length", cgiContent.substr(contentLengthPos + 16, contentLengthEnd - 1));
-		cgiContent = cgiContent.substr(contentLengthEnd, cgiContent.length());
-	} else
-		response.addHeader("Content-Length", ft_itoa(cgiContent.length()));
+	if (!hasContentLength)
+		response.addHeader("Content-Length", ft_itoa(body.length()));
+	(void)hasStatus;
+	this->_returnCode = statusCode;
+	this->_content = body;
 }
 
 void Post::_executeCgiScript(Request &request, const std::string &scriptPath, const std::string &postData) {
@@ -107,28 +131,30 @@ void Post::_executeCgiScript(Request &request, const std::string &scriptPath, co
 	cgi_handler.setEnvironment(scriptPath, executorPath, request.getLocation(), *this->server_config);
 	cgi_handler._addEnv("UPLOAD_DIR", uploadDir);
 	cgi_handler._addEnv("CONTENT_LENGTH", ft_itoa(postData.length()));
+	// THIS IS FUCKING STUPID, BUT IT'S HOW IT WORKS WITH TESTER
+	cgi_handler._addEnv("PATH_INFO", request.getPathInfo());
+	//cgi_handler._addEnv("SCRIPT_NAME", request.getPathInfo());
+	cgi_handler._addEnv("REQUEST_URI", request.getPathInfo());
 	cgi_handler.formatEnvironment();
 
 
 	try {
 		this->_content = cgi_handler.execute(postData);
-		std::cout << "Content: " << std::endl << this->_content << std::endl;
 	} catch (std::exception &e) {
 		this->_content = "{\"success\": false, \"error\": \"CGI execution error\"}";
 		this->_returnCode = 500;
 		return;
 	}
 
-	size_t headerEndPos = this->_content.find("\r\n\r\n");
-	if (headerEndPos == std::string::npos) {
-		headerEndPos = this->_content.find("\n\n");
-		if (headerEndPos != std::string::npos) {
-			headerEndPos += 2;
-		}
-	} else
-		headerEndPos += 4;
-
-	if (headerEndPos != std::string::npos)
-		this->_content = this->_content.substr(headerEndPos);
+	//size_t headerEndPos = this->_content.find("\r\n\r\n");
+	//if (headerEndPos == std::string::npos) {
+	//	headerEndPos = this->_content.find("\n\n");
+	//	if (headerEndPos != std::string::npos) {
+	//		headerEndPos += 2;
+	//	}
+	//} else
+	//	headerEndPos += 4;
+	//if (headerEndPos != std::string::npos)
+	//	this->_content = this->_content.substr(headerEndPos);
 	this->_returnCode = 200;
 }
