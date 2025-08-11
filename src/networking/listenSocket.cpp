@@ -8,7 +8,6 @@ ListenSocket::~ListenSocket(void) {
 
 ListenSocket::ListenSocket(std::vector<BindingSocket*> bindingSockets, std::vector<Config*> configs)
 	: _sockets(bindingSockets), _configs(configs) {
-	// Setup listening for all sockets
 	for (size_t i = 0; i < this->_sockets.size(); i++) {
 		int sock = this->_sockets[i]->get_sock();
 		if (listen(sock, 10) < 0) {
@@ -45,7 +44,7 @@ void ListenSocket::handler() {
 	size_t totalRead = 0;
 
 	while (true) {
-		ssize_t bytesRead = recv(this->_newSocket, tempBuffer, BUFFER_SIZE - 1, 0); // Removed MSG_DONTWAIT
+		ssize_t bytesRead = recv(this->_newSocket, tempBuffer, BUFFER_SIZE - 1, 0);
 		if (bytesRead <= 0) {
 			break;
 		}
@@ -54,7 +53,6 @@ void ListenSocket::handler() {
 		tempBuffer[bytesRead] = '\0';
 		request.append(tempBuffer, bytesRead);
 
-		// Parse headers on first iteration
 		if (!headersParsed) {
 			size_t headerEnd = request.find("\r\n\r\n");
 			if (headerEnd != std::string::npos) {
@@ -69,26 +67,20 @@ void ListenSocket::handler() {
 						size_t start = headers.find_first_of("0123456789", pos);
 						if (start != std::string::npos) {
 							contentLength = static_cast<size_t>(std::atoll(headers.c_str() + start));
-							// Only break if we have all the data
 							if (totalRead >= (headerEnd + 4 + contentLength)) {
 								break;
 							}
-						} else {
-							break; // No body expected
-						}
-					} else {
-						break; // No Content-Length header means no body
-					}
+						} else
+							break;
+					} else
+						break;
 				}
 			}
 		} else if (!isChunked && contentLength > 0) {
-			// If headers are parsed and we know the content length
-			if (totalRead >= contentLength) {
+			if (totalRead >= contentLength)
 				break;
-			}
-		} else if (isChunked && request.find("\r\n0\r\n\r\n") != std::string::npos) {
+		} else if (isChunked && request.find("\r\n0\r\n\r\n") != std::string::npos)
 			break;
-		}
 	}
 
 	delete[] tempBuffer;
@@ -152,7 +144,6 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 	}
 	std::cout << RESET << std::endl << std::endl;
 
-	// Ajouter sockets listening au poll
 	for (size_t i = 0; i < this->_sockets.size(); i++)
 	{
 		pollfd listenPfd;
@@ -167,24 +158,21 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 		int pollResult = poll(&this->_pollfds[0], this->_pollfds.size(), 1000);
 
 		if (pollResult < 0) {
-			if (errno == EINTR) // interrupted by signal
+			if (errno == EINTR)
 				continue;
 			throw std::runtime_error("poll failed");
 		}
 
-		// Vérifier nouveaux clients sur sockets listening
 		for (size_t i = 0; i < this->_sockets.size(); i++) {
 			int listenSock = this->_sockets[i]->get_sock();
 
 			for (size_t j = 0; j < this->_pollfds.size(); j++) {
 				if (this->_pollfds[j].fd == listenSock && (this->_pollfds[j].revents & POLLIN)) {
-					// Nouveau client sur socket listening
 					struct sockaddr_in adress = this->_sockets[i]->get_address();
 					int adress_len = sizeof(adress);
 
 					int newSocket = accept(listenSock, (struct sockaddr *)&adress, (socklen_t*)&adress_len);
 					if (newSocket >= 0) {
-						// Ajouter nouveau client au poll
 						pollfd clientPfd;
 						clientPfd.fd = newSocket;
 						clientPfd.events = POLLIN;
@@ -197,7 +185,6 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 			}
 		}
 
-		// Traiter clients existants
 		for (size_t i = this->_sockets.size(); i < this->_pollfds.size(); )
 		{
 			if (this->_pollfds[i].revents & POLLIN)
@@ -206,7 +193,6 @@ void ListenSocket::launch(volatile sig_atomic_t &keepRunning) {
 				this->handler();
 				this->responder();
 
-				// Supprimer client du poll
 				this->_clientBuffers.erase(this->_newSocket);
 				this->_pollfds.erase(this->_pollfds.begin() + i);
 			}

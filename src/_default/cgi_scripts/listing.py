@@ -122,7 +122,6 @@ print(f"""<!DOCTYPE html>
                 </tr>
 """)
 
-# Generate directory rows
 for d in sorted(dirs):
     path = os.path.join(current_dir, d)
     mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(path))
@@ -135,7 +134,6 @@ for d in sorted(dirs):
                 </tr>
     """)
 
-# Generate file rows
 for f in sorted(files):
     path = os.path.join(current_dir, f)
     size = os.path.getsize(path)
@@ -149,7 +147,6 @@ for f in sorted(files):
                 </tr>
     """)
 
-# Close HTML
 print("""
             </tbody>
         </table>

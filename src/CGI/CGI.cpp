@@ -1,6 +1,4 @@
 #include "CGI.hpp"
-#include <sys/vfs.h>    // For statfs
-#include <sys/statvfs.h>  // For statvfs
 
 CGI::CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers, int serverPort) {
 	this->_envpFormatted = false;
@@ -36,10 +34,8 @@ std::string CGI::execute(const std::string& body) {
 	}
 
 	std::string scriptPath = this->_env["SCRIPT_NAME"];
-	// Set content length for POST requests
-	if (!body.empty()) {
+	if (!body.empty())
 		this->_addEnv("CONTENT_LENGTH", ft_itoa(body.length()));
-	}
 
 	pid_t pid = fork();
 	if (pid < 0) {
@@ -68,25 +64,22 @@ std::string CGI::execute(const std::string& body) {
 		this->formatEnvironment();
 		char *arguments[3];
 		arguments[0] = const_cast<char*>(this->_executorPath.c_str());
-		arguments[1] = const_cast<char*>(scriptPath.c_str()); // chemin réel du script sur le disque
+		arguments[1] = const_cast<char*>(scriptPath.c_str());
 		arguments[2] = NULL;
 		execve(this->_executorPath.c_str(), arguments, this->_envp);
 		std::cerr << "execve failed: " << strerror(errno) << std::endl;
 		_exit(1);
 	}
 
-	// Parent process
 	close(output_fd);
 	bool success = true;
 
-	// Write body data
 	if (!body.empty()) {
 		const size_t CHUNK_SIZE = 65536;
 		size_t total_written = 0;
 		const char* data = body.c_str();
 		size_t remaining = body.length();
 
-		// Write the entire body first
 		while (remaining > 0 && success) {
 			size_t chunk_size = (remaining < CHUNK_SIZE) ? remaining : CHUNK_SIZE;
 			ssize_t written = write(input_fd, data + total_written, chunk_size);
@@ -101,7 +94,6 @@ std::string CGI::execute(const std::string& body) {
 			remaining -= written;
 		}
 
-		// Make sure all data is written before closing
 		fsync(input_fd);
 	}
 
@@ -117,10 +109,9 @@ std::string CGI::execute(const std::string& body) {
 		return "{\"success\": false, \"error\": \"Failed to write request body\"}";
 	}
 
-	// Wait for CGI process with timeout
 	int status;
 	time_t start_time = time(NULL);
-	const time_t timeout = 120; // Increased timeout for large files
+	const time_t timeout = 120;
 
 	while (true) {
 		pid_t result = waitpid(pid, &status, WNOHANG);
@@ -138,7 +129,6 @@ std::string CGI::execute(const std::string& body) {
 		usleep(10000);
 	}
 
-	// Read CGI output
 	this->_output.clear();
 	int out_fd = open(output_tmp, O_RDONLY);
 	if (out_fd >= 0) {
@@ -189,7 +179,7 @@ char **CGI::formatEnvironment() {
 void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std::string location, Config &config ) {
 	(void)location;
 	this->_addEnv("REQUEST_METHOD", ft_upper(this->_method));
-	this->_addEnv("SCRIPT_NAME", scriptPath);  // This is needed!
+	this->_addEnv("SCRIPT_NAME", scriptPath);
 	this->_addEnv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin");
 	this->_addEnv("QUERY_STRING", "");
 	this->_addEnv("SERVER_PROTOCOL", this->_protocol);
@@ -197,9 +187,7 @@ void CGI::setEnvironment( std::string scriptPath, std::string executorPath, std:
 	this->_addEnv("GATEWAY_INTERFACE", "CGI/1.1");
 	this->_addEnv("SERVER_NAME", config.getServerName());
 	this->_addEnv("SERVER_PORT", ft_itoa(this->_serverPort));
-
-	// For POST requests, Content-Length will be set in execute()
-	this->_addEnv("CONTENT_TYPE", "application/octet-stream");  // Default content type for binary data
+	this->_addEnv("CONTENT_TYPE", "application/octet-stream"); 
 
 	this->_executorPath = executorPath;
 }

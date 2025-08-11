@@ -3,6 +3,7 @@
 
 /* UTILS */
 
+// @brief Line is converted to hex to follow the RFC for chunked transfer encoding
 std::string readChunkedBody(const std::vector<std::string>& lines, size_t start) {
 	std::string body = "";
 	size_t i = start;
@@ -10,23 +11,18 @@ std::string readChunkedBody(const std::vector<std::string>& lines, size_t start)
 		std::string line = trim(lines[i++], false);
 		if (line.empty()) continue;
 
-		// Convert chunk size from hex using stringstream
 		std::istringstream iss(line);
 		int chunkSize = 0;
 		iss >> std::hex >> chunkSize;
 		if (chunkSize == 0) break;
 
-		// Read the chunk data (can span multiple lines depending on how you split)
 		if (i >= lines.size()) break;
 
-		// Collect chunkSize bytes (rough version assuming 1 line = 1 chunk)
 		std::string chunkLine = lines[i++];
 		if ((int)chunkLine.size() >= chunkSize)
 			body += chunkLine.substr(0, chunkSize);
 		else
-			body += chunkLine; // fallback
-
-		// After each chunk, there should be a \r\n line separator — skip it if needed
+			body += chunkLine;
 	}
 	return body;
 }

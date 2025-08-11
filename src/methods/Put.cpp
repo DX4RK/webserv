@@ -24,7 +24,6 @@ void Put::process(Response &response, Request &request) {
 
 	if (this->_returnCode != 0) return;
 
-	// Essayer d'écrire le contenu du body dans le fichier
 	std::ofstream file(this->_filePath.c_str(), std::ios::binary);
 	if (!file.is_open()) {
 		this->_returnCode = 500;
@@ -58,13 +57,11 @@ bool Put::_handleFileUrl(Request &request, const std::string root) {
 
 	this->_fileName = getLastSub(fullPath, '/');
 
-	// Pour PUT on peut créer un nouveau fichier donc pas besoin de vérifier l'existence
 	if (isDirectory(fullPath)) {
 		this->_returnCode = 405;
 		return (false);
 	}
 
-	// Vérifier les permissions d'écriture
 	std::string parentDir = fullPath.substr(0, fullPath.find_last_of('/'));
 	if (!this->_hasWritePermission(parentDir)) {
 		this->_returnCode = 403;

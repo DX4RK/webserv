@@ -22,3 +22,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <bits/stdc++.h>
+
+#include <sys/vfs.h>
+#include <sys/statvfs.h>
