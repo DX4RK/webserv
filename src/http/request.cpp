@@ -187,6 +187,7 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 	}
 	// for tester
 	this->_pathInfo = originalUrl;
+	this->_isDirectory = directory;
 	/*if (this->_cgiEnabled && extensionEnd < path.length()) {
 		this->_pathInfo = path.substr(extensionEnd);
 		this->_path = path.substr(0, extensionEnd);
@@ -217,7 +218,7 @@ Request::Request(ListenSocket &listener, Config *config, int errorCode) {
 		}
 	}
 
-	(void)directory;
+	//(void)directory;
 	return;
 }
 
