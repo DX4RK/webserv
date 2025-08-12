@@ -9,7 +9,7 @@
 #include "Post.hpp"
 #include "GetError.hpp"
 #include "utils.hpp"
-#include "CGI.hpp"  // AJOUT
+#include "CGI.hpp"
 
 class Response {
 	public:
@@ -31,7 +31,7 @@ class Response {
 		std::string _headers;
 
 		Method _processRequest( std::string method, Request &request );
-		void _handleGithubCallback(Request &request);  // AJOUT
+		void _handleGithubCallback(Request &request);
 };
 
 #endif

@@ -114,14 +114,13 @@ void ListenSocket::handler() {
 
 		std::cout << "Status code: " << status_code << std::endl;
 		//std::cout << "Received " << BOLD << LIGHT_PURPLE << req.getMethod() << RESET << " code: " << status_code << " url: " << req.getUrl() << std::endl;
-		//std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " treated request " << LIGHT_ORANGE << BOLD << status_code << RESET << DIM << " " << req.getUrl() << RESET << std::endl;
+		std::cout << LIGHT_BLUE << BOLD << "[webserv]" << RESET << " treated request " << LIGHT_ORANGE << BOLD << status_code << RESET << DIM << " " << req.getUrl() << RESET << std::endl;
 	}
 }
 
 void ListenSocket::responder(void) {
 	write(this->_newSocket, this->response.c_str(), response.length());
 	close(this->_newSocket);
-	// Remove mapping for this client fd
 	this->_clientFdToConfigIdx.erase(this->_newSocket);
 	this->response = "";
 }

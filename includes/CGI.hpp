@@ -13,20 +13,20 @@ class CGI {
 		CGI(std::string method, std::string protocol, std::map<std::string, std::string> headers, int serverPort);
 		~CGI(void);
 
-		std::string execute(const std::string& body);  // Maintenant retourne std::string
-		std::string getOutput() const;  // Getter pour la sortie
+		std::string execute(const std::string& body);
+		std::string getOutput() const; 
 		char **formatEnvironment();
 		void setEnvironment( std::string scriptPath, std::string executorPath, std::string location, Config &config );
-		void _addEnv(std::string index, std::string value);  // Public
+		void _addEnv(std::string index, std::string value);
 
 	private:
 		std::string _method;
 		std::string _protocol;
-		std::string _output;  // AJOUT : stockage de la sortie
+		std::string _output;
 		std::string _executorPath;
 		std::map<std::string, std::string> _headers;
 		std::map<std::string, std::string> _env;
-		int _serverPort;  // AJOUT : port du serveur
+		int _serverPort;
 
 		char **_envp;
 		bool _envpFormatted;

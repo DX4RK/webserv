@@ -27,9 +27,8 @@ private:
 	std::map<int, std::string> _clientBuffers;
 
 	std::vector<BindingSocket*> _sockets;
-	std::vector<Config*> _configs; // now: one config per socket
+	std::vector<Config*> _configs;
 
-	// Map client fd to config index
 	std::map<int, size_t> _clientFdToConfigIdx;
 
 	void handler(void);
